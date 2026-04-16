@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Oiga Bonita — Panel de productos</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --rojo: #D92B2B;
+  --rojo-dark: #B01F1F;
+  --rojo-light: #FDEAEA;
+  --blanco: #FFFFFF;
+  --gris: #F5F5F3;
+  --gris-borde: #E8E8E6;
+  --texto: #1A1A1A;
+  --texto-suave: #666660;
+  --verde: #16a34a;
+  --verde-light: #dcfce7;
+  --radio: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--gris); color: var(--texto); min-height: 100vh; }
+
+.header {
+  background: var(--rojo); padding: 16px 20px;
+  display: flex; align-items: center; gap: 12px;
+  position: sticky; top: 0; z-index: 10;
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: #fff; letter-spacing: 2px; }
+.header-sub { font-size: 13px; color: rgba(255,255,255,.7); }
+.header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.btn { padding: 8px 16px; border-radius: 20px; border: none; font-size: 13px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; }
+.btn-white { background: #fff; color: var(--rojo); }
+.btn-white:hover { background: var(--rojo-light); }
+.btn-outline { background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,.5); }
+.btn-outline:hover { background: rgba(255,255,255,.1); }
+
+.container { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+  background: var(--verde); color: #fff; padding: 12px 24px; border-radius: 24px;
+  font-size: 14px; font-weight: 500; transition: transform .3s ease; z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+.section-title {
+  font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+  letter-spacing: 1px; color: var(--texto); margin-bottom: 12px;
+}
+
+.add-form {
+  background: var(--blanco); border-radius: var(--radio);
+  border: 1.5px solid var(--gris-borde); padding: 16px; margin-bottom: 24px;
+}
+.add-form h3 { font-size: 14px; font-weight: 500; color: var(--texto-suave); margin-bottom: 12px; }
+.form-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.form-row input, .form-row select {
+  flex: 1; min-width: 120px; padding: 10px 12px; border-radius: 10px;
+  border: 1.5px solid var(--gris-borde); background: var(--gris);
+  color: var(--texto); font-size: 14px; font-family: 'DM Sans', sans-serif; outline: none;
+  transition: border-color .15s;
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--rojo); background: #fff; }
+.btn-add {
+  padding: 10px 20px; background: var(--rojo); color: #fff; border: none;
+  border-radius: 10px; font-size: 14px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; cursor: pointer; white-space: nowrap;
+  transition: background .15s;
+}
+.btn-add:hover { background: var(--rojo-dark); }
+
+.cat-section { margin-bottom: 20px; }
+.cat-label {
+  font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px;
+  color: var(--texto-suave); margin-bottom: 6px; padding-left: 4px;
+}
+.product-card {
+  background: var(--blanco); border-radius: var(--radio);
+  border: 1.5px solid var(--gris-borde); margin-bottom: 6px;
+  transition: border-color .15s;
+}
+.product-card:hover { border-color: #ccc; }
+.product-row {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+}
+.product-name { flex: 1; font-size: 14px; color: var(--texto); }
+.product-price {
+  font-size: 14px; font-weight: 500; color: var(--texto);
+  min-width: 80px; text-align: right;
+}
+.edit-inline { display: none; padding: 10px 14px; border-top: 1px solid var(--gris-borde); gap: 8px; flex-wrap: wrap; }
+.edit-inline.open { display: flex; }
+.edit-inline input, .edit-inline select {
+  flex: 1; min-width: 100px; padding: 8px 10px; border-radius: 8px;
+  border: 1.5px solid var(--gris-borde); background: var(--gris);
+  color: var(--texto); font-size: 13px; font-family: 'DM Sans', sans-serif; outline: none;
+}
+.edit-inline input:focus, .edit-inline select:focus { border-color: var(--rojo); background: #fff; }
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px; transition: background .15s; flex-shrink: 0;
+}
+.btn-edit { background: #f0f0ee; color: var(--texto); }
+.btn-edit:hover { background: var(--gris-borde); }
+.btn-delete { background: var(--rojo-light); color: var(--rojo); }
+.btn-delete:hover { background: #FBDADA; }
+.btn-save { background: var(--verde-light); color: var(--verde); font-size: 13px; padding: 8px 14px; width: auto; border-radius: 8px; font-weight: 500; font-family: 'DM Sans', sans-serif; }
+.btn-save:hover { background: #bbf7d0; }
+.btn-cancel-edit { background: #f0f0ee; color: var(--texto-suave); font-size: 13px; padding: 8px 14px; width: auto; border-radius: 8px; font-family: 'DM Sans', sans-serif; }
+
+.empty { text-align: center; padding: 40px; color: var(--texto-suave); font-size: 14px; }
+
+.footer-btns { display: flex; gap: 10px; margin-top: 24px; flex-wrap: wrap; }
+.btn-go { flex: 1; padding: 13px; background: var(--rojo); color: #fff; border: none; border-radius: var(--radio); font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: background .15s; text-align: center; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.btn-go:hover { background: var(--rojo-dark); }
+.btn-reset { padding: 13px 20px; background: var(--blanco); color: var(--texto-suave); border: 1.5px solid var(--gris-borde); border-radius: var(--radio); font-size: 14px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all .15s; }
+.btn-reset:hover { border-color: var(--rojo); color: var(--rojo); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="logo">Oiga Bonita</div>
+    <div class="header-sub">Panel de productos</div>
+  </div>
+  <div class="header-right">
+    <span id="productCount" style="font-size:12px;color:rgba(255,255,255,.7)"></span>
+    <button class="btn btn-white" onclick="guardar()">Guardar cambios</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="add-form">
+    <h3>Agregar nuevo producto</h3>
+    <div class="form-row">
+      <input id="newName" type="text" placeholder="Nombre del producto" />
+      <input id="newPrice" type="number" placeholder="Precio ($)" min="0" />
+      <select id="newCat">
+        <option value="bebidas">Bebidas</option>
+        <option value="golosinas">Golosinas</option>
+        <option value="chocolates">Chocolates</option>
+        <option value="cigarrillos">Cigarrillos</option>
+        <option value="otros">Otros</option>
+      </select>
+      <button class="btn-add" onclick="agregarProducto()">+ Agregar</button>
+    </div>
+  </div>
+
+  <div class="section-title">Productos actuales</div>
+  <div id="productList"></div>
+
+  <div class="footer-btns">
+    <a href="index.html" class="btn-go">Ir al kiosco</a>
+    <button class="btn-reset" onclick="resetear()">Restaurar productos originales</button>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DEFAULT_PRODUCTS = [
+  {name:"Coca-Cola 500ml",price:800,cat:"bebidas"},
+  {name:"Sprite 500ml",price:800,cat:"bebidas"},
+  {name:"Fanta naranja 500ml",price:800,cat:"bebidas"},
+  {name:"Agua mineral 500ml",price:500,cat:"bebidas"},
+  {name:"Jugo Cepita naranja",price:700,cat:"bebidas"},
+  {name:"Alfajor Havanna",price:950,cat:"chocolates"},
+  {name:"Alfajor Milka",price:700,cat:"chocolates"},
+  {name:"Kit Kat",price:850,cat:"chocolates"},
+  {name:"Twix",price:850,cat:"chocolates"},
+  {name:"Maní con chocolate",price:600,cat:"golosinas"},
+  {name:"Gomitas",price:400,cat:"golosinas"},
+  {name:"Chupetín",price:200,cat:"golosinas"},
+  {name:"Caramelos surtidos x10",price:300,cat:"golosinas"},
+  {name:"Cigarrillos Marlboro",price:2200,cat:"cigarrillos"},
+  {name:"Cigarrillos Philip Morris",price:2100,cat:"cigarrillos"},
+  {name:"Cigarrillos Camel",price:2300,cat:"cigarrillos"},
+];
+
+let products = [];
+
+function load() {
+  const saved = localStorage.getItem('ob_products');
+  products = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  render();
+}
+
+function save() {
+  localStorage.setItem('ob_products', JSON.stringify(products));
+}
+
+function guardar() {
+  save();
+  showToast('Cambios guardados!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+function render() {
+  const list = document.getElementById('productList');
+  const cats = [...new Set(products.map(p=>p.cat))];
+  document.getElementById('productCount').textContent = products.length + ' productos';
+
+  if (products.length === 0) {
+    list.innerHTML = '<div class="empty">No hay productos. Agregá uno arriba.</div>';
+    return;
+  }
+
+  list.innerHTML = cats.map(cat => {
+    const items = products.filter(p=>p.cat===cat);
+    return `
+      <div class="cat-section">
+        <div class="cat-label">${cat}</div>
+        ${items.map((p,_) => {
+          const idx = products.indexOf(p);
+          return `
+          <div class="product-card" id="card-${idx}">
+            <div class="product-row">
+              <span class="product-name">${p.name}</span>
+              <span class="product-price">$${p.price.toLocaleString('es-AR')}</span>
+              <button class="btn-icon btn-edit" onclick="toggleEdit(${idx})" title="Editar">✏️</button>
+              <button class="btn-icon btn-delete" onclick="eliminar(${idx})" title="Eliminar">🗑️</button>
+            </div>
+            <div class="edit-inline" id="edit-${idx}">
+              <input type="text" id="ename-${idx}" value="${p.name}" placeholder="Nombre"/>
+              <input type="number" id="eprice-${idx}" value="${p.price}" placeholder="Precio" min="0"/>
+              <select id="ecat-${idx}">
+                ${['bebidas','golosinas','chocolates','cigarrillos','otros'].map(c=>`<option value="${c}"${c===p.cat?' selected':''}>${c.charAt(0).toUpperCase()+c.slice(1)}</option>`).join('')}
+              </select>
+              <button class="btn-icon btn-save" onclick="guardarEdicion(${idx})">Guardar</button>
+              <button class="btn-icon btn-cancel-edit" onclick="toggleEdit(${idx})">Cancelar</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }).join('');
+}
+
+function toggleEdit(idx) {
+  const ed = document.getElementById('edit-'+idx);
+  ed.classList.toggle('open');
+}
+
+function guardarEdicion(idx) {
+  const name = document.getElementById('ename-'+idx).value.trim();
+  const price = parseInt(document.getElementById('eprice-'+idx).value);
+  const cat = document.getElementById('ecat-'+idx).value;
+  if (!name || isNaN(price) || price < 0) { showToast('Completá todos los campos'); return; }
+  products[idx] = {name, price, cat};
+  save();
+  render();
+  showToast('Producto actualizado!');
+}
+
+function eliminar(idx) {
+  if (!confirm('¿Eliminar "' + products[idx].name + '"?')) return;
+  products.splice(idx, 1);
+  save();
+  render();
+  showToast('Producto eliminado');
+}
+
+function agregarProducto() {
+  const name = document.getElementById('newName').value.trim();
+  const price = parseInt(document.getElementById('newPrice').value);
+  const cat = document.getElementById('newCat').value;
+  if (!name) { showToast('Escribí el nombre del producto'); return; }
+  if (isNaN(price) || price < 0) { showToast('Ingresá un precio válido'); return; }
+  products.push({name, price, cat});
+  save();
+  render();
+  document.getElementById('newName').value = '';
+  document.getElementById('newPrice').value = '';
+  showToast('Producto agregado!');
+}
+
+function resetear() {
+  if (!confirm('¿Restaurar los productos originales? Se perderán los cambios.')) return;
+  products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  save();
+  render();
+  showToast('Productos restaurados');
+}
+
+load();
+</script>
+</body>
+</html>
