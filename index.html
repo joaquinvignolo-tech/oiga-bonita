@@ -291,10 +291,13 @@ const DEFAULT_PRODUCTS = [
 const saved = localStorage.getItem('ob_products');
 const PRODUCTS = saved ? JSON.parse(saved) : DEFAULT_PRODUCTS;
 
+const ob_promos = localStorage.getItem('ob_promos');
+const promoBlock = ob_promos ? `\n\nPROMOCIONES ACTIVAS HOY:\n${ob_promos}\n(Mencioná las promos de forma natural cuando sea relevante. Si el pedido supera $30.000 avisá que el envío es gratis.)` : '';
+
 const SYSTEM_PROMPT = `Sos el asistente virtual del kiosco "Oiga Bonita" en Argentina. Sos simpático, informal y usás el voseo rioplatense. Tu trabajo es ayudar a los clientes a elegir y pedir productos.
 
 CATALOGO:
-${PRODUCTS.map(p=>`- ${p.name}: $${p.price.toLocaleString('es-AR')} (${p.cat})`).join('\n')}
+${PRODUCTS.map(p=>`- ${p.name}: $${p.price.toLocaleString('es-AR')} (${p.cat})`).join('\n')}${promoBlock}
 
 INSTRUCCIONES:
 1. Cuando el cliente quiere agregar un producto, incluí al FINAL de tu respuesta:
@@ -303,7 +306,8 @@ INSTRUCCIONES:
 3. Cuando el cliente quiera confirmar el pedido, pedile solo su nombre.
 4. Cuando tengas el nombre: CONFIRMAR:[nombre]|gps
 5. Respuestas cortas, máximo 2-3 oraciones. Sé natural y cálido.
-6. Si no tenés algo, decilo y ofrecé alternativas.`;
+6. Si no tenés algo, decilo y ofrecé alternativas.
+7. Si el total del pedido se acerca a $30.000 avisale que con un poco más tiene envío gratis.`;
 
 let order = [];
 let history = [];
