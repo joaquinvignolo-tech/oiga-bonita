@@ -336,9 +336,9 @@ function parseCommands(text) {
 
 async function callClaude(userMsg) {
   history.push({role:'user', content: userMsg});
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+  const resp = await fetch('/api/chat', {
     method:'POST',
-    headers:{'Content-Type':'application/json','x-api-key': API_KEY,'anthropic-version':'2023-06-01'},
+    headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
       model:'claude-sonnet-4-20250514',
       max_tokens:400,
@@ -352,7 +352,6 @@ async function callClaude(userMsg) {
   history.push({role:'assistant', content: raw});
   return raw;
 }
-
 async function sendMsg() {
   const inp = document.getElementById('userInput');
   const btn = document.getElementById('sendBtn');
