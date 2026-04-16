@@ -293,7 +293,8 @@ function confirmarPedidoConNombre(nombre) {
       updateOrderUI();
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
-      addMsg('Ubicación obtenida! Te abrimos WhatsApp con tu pedido. En breve te contactamos. 🛵', 'bot');
+      const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
+addMsg(`Ubicación obtenida! Tu pedido está listo.<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;margin-top:4px">Enviar pedido por WhatsApp</a>`, 'bot');
       setTimeout(()=>window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`,'_blank'), 400);
     },
     function(err) {
