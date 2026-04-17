@@ -1139,6 +1139,7 @@ function limpiarHistorial() {
 
 <script>
 function cerrarSesion() {
+  sessionStorage.removeItem('ob_auth');
   document.getElementById('adminContent').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('loginUser').value = '';
@@ -1150,6 +1151,7 @@ function doLogin() {
   const user = document.getElementById('loginUser').value.trim();
   const pass = document.getElementById('loginPass').value.trim();
   if (user === 'joaquin' && pass === 'estaderojo1') {
+    sessionStorage.setItem('ob_auth', '1');
     document.getElementById('loginScreen').style.display = 'none';
     document.getElementById('adminContent').style.display = 'block';
     load();
@@ -1157,6 +1159,12 @@ function doLogin() {
     document.getElementById('loginError').style.display = 'block';
     document.getElementById('loginPass').value = '';
   }
+}
+
+if (sessionStorage.getItem('ob_auth') === '1') {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminContent').style.display = 'block';
+  load();
 }
 </script>
 </body>
