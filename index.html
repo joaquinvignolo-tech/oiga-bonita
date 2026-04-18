@@ -398,22 +398,9 @@ function confirmarPedidoConNombre(nombre) {
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
+      const orderSnapshot = order.map(i => ({...i}));
       
-      const orderItems = JSON.parse(JSON.stringify(order.length > 0 ? order : []));
-      let mpBtn = '';
-      try {
-        const mpResp = await fetch('/api/payment', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({ items: orderItems, payer_name: nombre })
-        });
-        const mpData = await mpResp.json();
-        if (mpData.init_point) {
-          mpBtn = `<a href="${mpData.init_point}" target="_blank" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;margin-top:8px">Pagar con Mercado Pago</a>`;
-        }
-      } catch(e) {}
-
-      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a>${mpBtn ? '<br>' + mpBtn : ''}`, 'bot');
+      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button id="mpBtn" onclick="pagarConMP(this)" data-items='${JSON.stringify(orderSnapshot)}' data-nombre="${nombre}" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
     },
     function(err) {
       let msg = 'Para poder entregarte el pedido necesitamos tu ubicacion GPS. ';
@@ -507,6 +494,32 @@ function sendQuick(txt) {
 document.getElementById('userInput').addEventListener('input', function() {
   document.getElementById('sendBtn').disabled = this.value.trim() === '';
 });
+
+async function pagarConMP(btn) {
+  btn.textContent = 'Generando link...';
+  btn.disabled = true;
+  try {
+    const items = JSON.parse(btn.dataset.items);
+    const nombre = btn.dataset.nombre;
+    const resp = await fetch('/api/payment', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ items, payer_name: nombre })
+    });
+    const data = await resp.json();
+    if (data.init_point) {
+      window.open(data.init_point, '_blank');
+      btn.textContent = 'Abrir Mercado Pago';
+      btn.disabled = false;
+      btn.onclick = () => window.open(data.init_point, '_blank');
+    } else {
+      btn.textContent = 'Error al generar link';
+    }
+  } catch(e) {
+    btn.textContent = 'Error — intentá de nuevo';
+    btn.disabled = false;
+  }
+}
 
 function scrollBtns(amount) {
   const el = document.getElementById('quickArea');
