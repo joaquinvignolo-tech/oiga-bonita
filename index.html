@@ -87,9 +87,12 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 @keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
 
 /* QUICK BUTTONS */
-.quick-area { padding: 8px 14px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; cursor: grab; }
-.quick-area::-webkit-scrollbar { display: none; }
+.quick-area { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); }
 .quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; }
+@media (max-width: 500px) {
+  .quick-area { flex-wrap: nowrap; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .quick-area::-webkit-scrollbar { display: none; }
+}
 .quick-btn {
   font-size: 12px; font-family: 'DM Sans', sans-serif;
   padding: 6px 13px; border-radius: 20px; border: 1px solid var(--gris-borde);
@@ -299,7 +302,7 @@ INSTRUCCIONES:
 4. Cuando tengas el nombre: CONFIRMAR:[nombre]|gps
 5. Respuestas MUY cortas — máximo 2 oraciones. NUNCA tires todo el catálogo. Si preguntan qué tienen, mencioná solo 2-3 categorías principales y preguntá qué están buscando. Ejemplo: "Tenemos cigarrillos, chocolates, gomitas y más. ¿Qué estás buscando?" — nada más.
 6. Si no tenés algo, decilo y ofrecé alternativas.
-10. Para CARGAS VIRTUALES (Personal, Claro, Movistar, Tuenti, TIN, DirecTV): preguntá compañía, monto (mínimo $1.000) y número de celular a cargar. Calculá el total con 10% de recargo. Luego avisá: "Las cargas se pagan por adelantado. Transferí $[total] a: 📲 Alias: oigabonita | 👤 Titular: Joaquin Ignacio Vignolo (Mercado Pago). Mandanos el comprobante por WhatsApp y en seguida te cargamos."
+10. Para CARGAS VIRTUALES (Personal, Claro, Movistar, Tuenti, TIN, DirecTV): no gestiones la carga por acá. Simplemente respondé: "Para cargas virtuales escribinos directo por WhatsApp al 351 3958555 y te coordinamos enseguida! 📲"
 7. Si el total del pedido se acerca a $30.000 avisale que con un poco más tiene envío gratis.
 8. Para productos RETORNABLES (los que tienen "Retornable" en el nombre) siempre preguntá: "¿Tenés el vale del envase? Si no tenés te sumamos $2.000." y ajustá el precio sumando $2000 si no tiene el vale.
 9. Para las gomitas hay variantes por precio: $1000 (Ositos, Conitos Frutales), $1500 (Sandia, Huevos, Frutilla a la Crema, Redondo Frutal, Eucaliptus, Dientes), $2000 (Moritas, Ladrillos). Cuando pidan gomitas preguntá qué tipo quieren.
@@ -489,14 +492,7 @@ document.getElementById('userInput').addEventListener('input', function() {
   document.getElementById('sendBtn').disabled = this.value.trim() === '';
 });
 
-const qa = document.querySelector('.quick-area');
-let isDown = false, startX, scrollLeft;
-qa.addEventListener('touchstart', e => { isDown = true; startX = e.touches[0].pageX - qa.offsetLeft; scrollLeft = qa.scrollLeft; });
-qa.addEventListener('touchend', () => isDown = false);
-qa.addEventListener('touchmove', e => { if (!isDown) return; const x = e.touches[0].pageX - qa.offsetLeft; qa.scrollLeft = scrollLeft - (x - startX); });
-qa.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - qa.offsetLeft; scrollLeft = qa.scrollLeft; qa.style.cursor='grabbing'; });
-qa.addEventListener('mouseup', () => { isDown = false; qa.style.cursor='grab'; });
-qa.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - qa.offsetLeft; qa.scrollLeft = scrollLeft - (x - startX); });
+
 
 const bienvenida = estaAbierto()
   ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨<br>Tenemos cervezas, gaseosas, cigarrillos, chocolates, golosinas, cargas virtuales y mucho más. ¿Qué estás buscando?'
