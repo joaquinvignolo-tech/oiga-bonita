@@ -6,18 +6,23 @@ export default async function handler(req, res) {
 
   const { items, payer_name } = req.body;
 
-  const preference = {
-    items: items.map(i => ({
-      title: i.name,
-      quantity: i.qty,
-      unit_price: i.price,
+  const mpItems = items
+    .filter(i => i.price > 0)
+    .map(i => ({
+      title: String(i.name).substring(0, 256),
+      quantity: Number(i.qty),
+      unit_price: Number(i.price),
       currency_id: 'ARS'
-    })),
+    }));
+
+  if (mpItems.length === 0) {
+    return res.status(400).json({ error: 'No hay items con precio válido' });
+  }
+
+  const preference = {
+    items: mpItems,
     payer: { name: payer_name || 'Cliente' },
-    payment_methods: {
-      excluded_payment_types: [],
-      installments: 1
-    },
+    payment_methods: { installments: 1 },
     statement_descriptor: 'OIGA BONITA',
     external_reference: `OB-${Date.now()}`,
     back_urls: {
