@@ -87,12 +87,9 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 @keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
 
 /* QUICK BUTTONS */
-.quick-area { padding: 8px 14px; display: flex; flex-wrap: wrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); }
-.quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; }
-@media (max-width: 500px) {
-  .quick-area { flex-wrap: nowrap; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-  .quick-area::-webkit-scrollbar { display: none; }
-}
+.quick-area { padding: 8px 14px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.quick-area::-webkit-scrollbar { display: none; }
+.quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; pointer-events: auto; }
 .quick-btn {
   font-size: 12px; font-family: 'DM Sans', sans-serif;
   padding: 6px 13px; border-radius: 20px; border: 1px solid var(--gris-borde);
@@ -186,19 +183,23 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 
   <div class="chat-window" id="chatWindow"></div>
 
-  <div class="quick-area">
-    <button class="quick-btn" onclick="sendQuick('Qué tienen?')">Qué tienen?</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero una cerveza')">🍺 Cervezas</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero una gaseosa')">🥤 Gaseosas</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero cigarrillos')">🚬 Cigarrillos</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero tabaco')">🍂 Tabaco</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero algo dulce')">🍬 Dulces</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero gomitas')">🍭 Gomitas</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero chocolates')">🍫 Chocolates</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero alfajores')">🍪 Alfajores</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero papeles o filtros')">📄 Papeles/Filtros</button>
-    <button class="quick-btn" onclick="sendQuick('Quiero una carga virtual')">📱 Cargas</button>
-    <button class="quick-btn" onclick="sendQuick('Confirmar pedido')">✓ Confirmar</button>
+  <div style="display:flex;align-items:center;background:var(--blanco);border-top:1px solid var(--gris-borde);flex-shrink:0">
+    <button onclick="scrollBtns(-120)" style="padding:0 8px;height:100%;background:none;border:none;border-right:1px solid var(--gris-borde);cursor:pointer;color:var(--texto-suave);font-size:16px;flex-shrink:0">&#8249;</button>
+    <div class="quick-area" id="quickArea">
+      <button class="quick-btn" onclick="sendQuick('Qué tienen?')">Qué tienen?</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero una cerveza')">🍺 Cervezas</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero una gaseosa')">🥤 Gaseosas</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero cigarrillos')">🚬 Cigarrillos</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero tabaco')">🍂 Tabaco</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero algo dulce')">🍬 Dulces</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero gomitas')">🍭 Gomitas</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero chocolates')">🍫 Chocolates</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero alfajores')">🍪 Alfajores</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero papeles o filtros')">📄 Papeles/Filtros</button>
+      <button class="quick-btn" onclick="sendQuick('Quiero una carga virtual')">📱 Cargas</button>
+      <button class="quick-btn" onclick="sendQuick('Confirmar pedido')">✓ Confirmar</button>
+    </div>
+    <button onclick="scrollBtns(120)" style="padding:0 8px;height:100%;background:none;border:none;border-left:1px solid var(--gris-borde);cursor:pointer;color:var(--texto-suave);font-size:16px;flex-shrink:0">&#8250;</button>
   </div>
 
   <div class="order-detail" id="orderDetail">
@@ -491,6 +492,11 @@ function sendQuick(txt) {
 document.getElementById('userInput').addEventListener('input', function() {
   document.getElementById('sendBtn').disabled = this.value.trim() === '';
 });
+
+function scrollBtns(amount) {
+  const el = document.getElementById('quickArea');
+  el.scrollBy({ left: amount, behavior: 'smooth' });
+}
 
 
 
