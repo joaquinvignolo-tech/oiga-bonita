@@ -87,9 +87,9 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 @keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
 
 /* QUICK BUTTONS */
-.quick-area { padding: 8px 14px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.quick-area { padding: 8px 6px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex: 1; min-width: 0; }
 .quick-area::-webkit-scrollbar { display: none; }
-.quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; pointer-events: auto; }
+.quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; }
 .quick-btn {
   font-size: 12px; font-family: 'DM Sans', sans-serif;
   padding: 6px 13px; border-radius: 20px; border: 1px solid var(--gris-borde);
