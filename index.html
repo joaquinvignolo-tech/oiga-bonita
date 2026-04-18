@@ -87,8 +87,9 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 @keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
 
 /* QUICK BUTTONS */
-.quick-area { padding: 8px 14px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.quick-area { padding: 8px 14px; display: flex; flex-wrap: nowrap; gap: 6px; flex-shrink: 0; background: var(--blanco); border-top: 1px solid var(--gris-borde); overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: none; cursor: grab; }
 .quick-area::-webkit-scrollbar { display: none; }
+.quick-area .quick-btn { flex-shrink: 0; white-space: nowrap; }
 .quick-btn {
   font-size: 12px; font-family: 'DM Sans', sans-serif;
   padding: 6px 13px; border-radius: 20px; border: 1px solid var(--gris-borde);
@@ -487,6 +488,15 @@ function sendQuick(txt) {
 document.getElementById('userInput').addEventListener('input', function() {
   document.getElementById('sendBtn').disabled = this.value.trim() === '';
 });
+
+const qa = document.querySelector('.quick-area');
+let isDown = false, startX, scrollLeft;
+qa.addEventListener('touchstart', e => { isDown = true; startX = e.touches[0].pageX - qa.offsetLeft; scrollLeft = qa.scrollLeft; });
+qa.addEventListener('touchend', () => isDown = false);
+qa.addEventListener('touchmove', e => { if (!isDown) return; const x = e.touches[0].pageX - qa.offsetLeft; qa.scrollLeft = scrollLeft - (x - startX); });
+qa.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - qa.offsetLeft; scrollLeft = qa.scrollLeft; qa.style.cursor='grabbing'; });
+qa.addEventListener('mouseup', () => { isDown = false; qa.style.cursor='grab'; });
+qa.addEventListener('mousemove', e => { if (!isDown) return; e.preventDefault(); const x = e.pageX - qa.offsetLeft; qa.scrollLeft = scrollLeft - (x - startX); });
 
 const bienvenida = estaAbierto()
   ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨<br>Tenemos cervezas, gaseosas, cigarrillos, chocolates, golosinas, cargas virtuales y mucho más. ¿Qué estás buscando?'
