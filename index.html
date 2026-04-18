@@ -398,7 +398,22 @@ function confirmarPedidoConNombre(nombre) {
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
-      addMsg(`Tu pedido esta listo! Toca el boton para enviarlo.<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar por WhatsApp</a>`, 'bot');
+      
+      const orderItems = JSON.parse(JSON.stringify(order.length > 0 ? order : []));
+      let mpBtn = '';
+      try {
+        const mpResp = await fetch('/api/payment', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ items: orderItems, payer_name: nombre })
+        });
+        const mpData = await mpResp.json();
+        if (mpData.init_point) {
+          mpBtn = `<a href="${mpData.init_point}" target="_blank" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;margin-top:8px">Pagar con Mercado Pago</a>`;
+        }
+      } catch(e) {}
+
+      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a>${mpBtn ? '<br>' + mpBtn : ''}`, 'bot');
     },
     function(err) {
       let msg = 'Para poder entregarte el pedido necesitamos tu ubicacion GPS. ';
