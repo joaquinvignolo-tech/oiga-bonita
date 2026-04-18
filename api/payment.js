@@ -6,6 +6,9 @@ export default async function handler(req, res) {
 
   const { items, payer_name } = req.body;
 
+  console.log('Items recibidos:', JSON.stringify(items));
+  console.log('Payer:', payer_name);
+
   const mpItems = items
     .filter(i => i.price > 0)
     .map(i => ({
