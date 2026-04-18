@@ -398,9 +398,10 @@ function confirmarPedidoConNombre(nombre) {
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
-      const orderSnapshot = order.map(i => ({...i}));
+      const orderSnapshot = order.map(i => ({name: i.name, qty: i.qty, price: i.price}));
+      const itemsJson = JSON.stringify(orderSnapshot).replace(/'/g, "&#39;");
       
-      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button id="mpBtn" onclick="pagarConMP(this)" data-items='${JSON.stringify(orderSnapshot)}' data-nombre="${nombre}" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
+      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button onclick="pagarConMP(this)" data-items="${itemsJson}" data-nombre="${nombre}" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
     },
     function(err) {
       let msg = 'Para poder entregarte el pedido necesitamos tu ubicacion GPS. ';
@@ -499,8 +500,10 @@ async function pagarConMP(btn) {
   btn.textContent = 'Generando link...';
   btn.disabled = true;
   try {
-    const items = JSON.parse(btn.dataset.items);
-    const nombre = btn.dataset.nombre;
+    const rawItems = btn.getAttribute('data-items').replace(/&#39;/g, "'");
+    const items = JSON.parse(rawItems);
+    const nombre = btn.getAttribute('data-nombre');
+    console.log('Enviando items:', items);
     const resp = await fetch('/api/payment', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
