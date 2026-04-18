@@ -393,7 +393,7 @@ function confirmarPedidoConNombre(nombre) {
       const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
       historial.push(pedidoHistorial);
       localStorage.setItem('ob_historial', JSON.stringify(historial));
-      window._mpItems = order.map(i => ({name: i.name, qty: i.qty, price: i.price}));
+      window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
       window._mpNombre = nombre;
       order = [];
       updateOrderUI();
