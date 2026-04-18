@@ -303,7 +303,7 @@ INSTRUCCIONES:
 4. Cuando tengas el nombre: CONFIRMAR:[nombre]|gps
 5. Respuestas MUY cortas — máximo 2 oraciones. NUNCA tires todo el catálogo. Si preguntan qué tienen, mencioná solo 2-3 categorías principales y preguntá qué están buscando. Ejemplo: "Tenemos cigarrillos, chocolates, gomitas y más. ¿Qué estás buscando?" — nada más.
 6. Si no tenés algo, decilo y ofrecé alternativas.
-10. Para CARGAS VIRTUALES (Personal, Claro, Movistar, Tuenti, TIN, DirecTV): no gestiones la carga por acá. Simplemente respondé: "Para cargas virtuales escribinos directo por WhatsApp al 351 3958555 y te coordinamos enseguida! 📲"
+10. Para CARGAS VIRTUALES (Personal, Claro, Movistar, Tuenti, TIN, DirecTV): preguntá de a uno: primero la compañía, después el monto (mínimo $1.000, solo múltiplos de $1.000). Calculá el total con 10% de recargo redondeado al número entero (ejemplo: $2.000 → $2.200, $5.000 → $5.500). Usá el comando especial: CARGA:Carga [Compañía] $[monto original]:[total con recargo]. Ejemplo: CARGA:Carga Personal $2000:2200. Avisá: "Se agrega 10% de recargo por el servicio ($[total]). Una vez confirmado el pago te cargamos el número."
 7. Si el total del pedido se acerca a $30.000 avisale que con un poco más tiene envío gratis.
 8. Para productos RETORNABLES (los que tienen "Retornable" en el nombre) SIEMPRE preguntá primero: "¿Tenés el envase para devolver?" — esperá la respuesta. Si dice SÍ tiene el envase, cobrá el precio normal. Si dice NO tiene el envase, sumá $2.000 al precio y explicá: "Se agregan $2.000 por el envase. El delivery te entrega un vale, y cuando lo traés al kiosco junto con el envase te devolvemos los $2.000."
 9. Para las gomitas hay variantes por precio: $1000 (Ositos, Conitos Frutales), $1500 (Sandia, Huevos, Frutilla a la Crema, Redondo Frutal, Eucaliptus, Dientes), $2000 (Moritas, Ladrillos). Cuando pidan gomitas preguntá qué tipo quieren.
@@ -432,6 +432,16 @@ function parseCommands(text) {
     }
     clean = clean.replace(m[0],'');
   }
+  const cargaMatches = [...text.matchAll(/CARGA:([^:]+):(\d+)/g)];
+  for (const m of cargaMatches) {
+    const nombre = m[1].trim();
+    const precio = parseInt(m[2]);
+    const ex = order.find(i=>i.name===nombre);
+    if (ex) ex.price = precio;
+    else order.push({name: nombre, price: precio, qty: 1, cat: 'cargas'});
+    clean = clean.replace(m[0], '');
+  }
+
   const confirmMatch = text.match(/CONFIRMAR:([^|]+)\|gps/i);
   if (confirmMatch) {
     window._clienteName = confirmMatch[1].trim();
