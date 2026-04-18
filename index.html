@@ -393,13 +393,13 @@ function confirmarPedidoConNombre(nombre) {
       const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
       historial.push(pedidoHistorial);
       localStorage.setItem('ob_historial', JSON.stringify(historial));
+      window._mpItems = order.map(i => ({name: i.name, qty: i.qty, price: i.price}));
+      window._mpNombre = nombre;
       order = [];
       updateOrderUI();
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
-      window._mpItems = order.map(i => ({name: i.name, qty: i.qty, price: i.price}));
-      window._mpNombre = nombre;
       
       addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
     },
