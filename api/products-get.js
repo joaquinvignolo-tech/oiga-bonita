@@ -12,7 +12,9 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
     if (data.result) {
-      res.status(200).json(JSON.parse(data.result));
+      let parsed = data.result;
+      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      res.status(200).json(parsed);
     } else {
       res.status(200).json(null);
     }
