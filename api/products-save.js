@@ -8,14 +8,17 @@ export default async function handler(req, res) {
     const { products, promos } = req.body;
 
     if (products !== undefined) {
-      await fetch(`${process.env.KV_REST_API_URL}/set/ob_products`, {
+      const serialized = JSON.stringify(products);
+      const resp = await fetch(`${process.env.KV_REST_API_URL}/set/ob_products`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(JSON.stringify(products))
+        body: JSON.stringify(serialized)
       });
+      const data = await resp.json();
+      console.log('Save products result:', JSON.stringify(data));
     }
 
     if (promos !== undefined) {
@@ -31,6 +34,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ ok: true });
   } catch (e) {
+    console.error('Save error:', e.message);
     res.status(500).json({ error: e.message });
   }
 }
