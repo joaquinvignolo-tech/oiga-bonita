@@ -174,9 +174,12 @@ async function load() {
   showToast('Cargando productos...');
   try {
     const resp = await fetch('/api/products-get');
-    const data = await resp.json();
-    products = data && Array.isArray(data) ? data : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+    const text = await resp.text();
+    const clean = text.trim().replace(/^'+|'+$/g, '');
+    const data = JSON.parse(clean);
+    products = Array.isArray(data) && data.length > 0 ? data : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
   } catch(e) {
+    console.error('Error cargando:', e);
     products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
   }
   try {
