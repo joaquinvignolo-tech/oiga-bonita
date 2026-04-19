@@ -441,10 +441,14 @@ function pedirGPS(nombre) {
       addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
     },
     function(err) {
-      let msg = 'Para poder entregarte el pedido necesitamos tu ubicacion GPS. ';
-      if (err.code === 1) msg += 'Parece que bloqueaste el permiso — habilitalo en la configuracion de tu celular e intentá de nuevo.';
-      else msg += 'No pudimos obtener tu ubicacion. Verifica que el GPS este activado e intenta de nuevo.';
-      addMsg(msg, 'bot');
+      const btnReintentar = `<button onclick="pedirGPS('${nombre}')" style="background:var(--rojo);color:#fff;border:none;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;margin-top:10px">Reintentar</button>`;
+      let msg = '';
+      if (err.code === 1) {
+        msg = 'Bloqueaste el permiso de ubicación en el navegador. Para habilitarlo: andá a Configuración de tu celular → Aplicaciones → Chrome (o tu navegador) → Permisos → Ubicación → Permitir. Después tocá Reintentar.';
+      } else {
+        msg = 'No pudimos obtener tu ubicación. Necesitás dos cosas:<br>1️⃣ Activar el <b>GPS</b> en la configuración de tu celular (el ícono de ubicación en la barra de notificaciones)<br>2️⃣ Tocar <b>Reintentar</b> acá abajo';
+      }
+      addMsg(msg + '<br>' + btnReintentar, 'bot');
     },
     { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
