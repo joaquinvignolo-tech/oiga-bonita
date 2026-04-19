@@ -379,24 +379,39 @@ function resetear() {
   showToast('Productos restaurados');
 }
 
-function renderHistorial() {
-  const h = JSON.parse(localStorage.getItem('ob_historial') || '[]');
+async function renderHistorial() {
   const list = document.getElementById('historialList');
-  if (h.length === 0) { list.innerHTML = '<div class="empty">Aún no hay pedidos registrados.</div>'; return; }
-  list.innerHTML = h.slice().reverse().slice(0,20).map(p => `
-    <div class="historial-item">
-      <div class="historial-header">
-        <span class="historial-nombre">${p.nombre}</span>
-        <span class="historial-hora">${p.hora}</span>
-      </div>
-      <div class="historial-detalle">${p.detalle}</div>
-      <div class="historial-total">Total: $${p.total.toLocaleString('es-AR')}</div>
-    </div>`).join('');
+  list.innerHTML = '<div class="empty">Cargando pedidos...</div>';
+  try {
+    const resp = await fetch('/api/orders-get');
+    const text = await resp.text();
+    const clean = text.trim().replace(/^'+|'+$/g, '');
+    const h = JSON.parse(clean);
+    if (!Array.isArray(h) || h.length === 0) {
+      list.innerHTML = '<div class="empty">Aún no hay pedidos registrados.</div>';
+      return;
+    }
+    list.innerHTML = h.slice().reverse().slice(0,20).map(p => `
+      <div class="historial-item">
+        <div class="historial-header">
+          <span class="historial-nombre">${p.nombre}</span>
+          <span class="historial-hora">${p.hora}</span>
+        </div>
+        <div class="historial-detalle">${p.detalle}</div>
+        <div class="historial-total">Total: $${(p.total||0).toLocaleString('es-AR')}</div>
+      </div>`).join('');
+  } catch(e) {
+    list.innerHTML = '<div class="empty">Error al cargar pedidos.</div>';
+  }
 }
 
-function limpiarHistorial() {
+async function limpiarHistorial() {
   if (!confirm('Limpiar todo el historial de pedidos?')) return;
-  localStorage.removeItem('ob_historial');
+  await fetch(`${window.location.origin}/api/orders-save`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({_clear: true})
+  });
   renderHistorial();
   showToast('Historial limpiado');
 }
