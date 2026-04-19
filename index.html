@@ -438,6 +438,7 @@ function pedirGPS(nombre) {
       }).catch(e => console.error('Error guardando pedido:', e));
       window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
       window._mpNombre = nombre;
+      window._mpMapsLink = mapsLink;
       order = [];
       updateOrderUI();
       document.getElementById('orderDetail').style.display = 'none';
@@ -543,7 +544,9 @@ async function pagarConMP(btn) {
       // Mostrar mensaje de comprobante
       const lines = (window._mpItems||[]).map(i=>`• ${i.qty}x ${i.name} — $${(i.price*i.qty).toLocaleString('es-AR')}`).join('%0A');
       const total = (window._mpItems||[]).reduce((a,i)=>a+i.price*i.qty,0);
-      const waMsg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A✅ *Pagado con Mercado Pago*%0A%0A📎 Comprobante adjunto`;
+      const mapsLink = window._mpMapsLink || '';
+      const ubicacionBlock = mapsLink ? `%0A%0A📍 *Ubicacion:*%0A${encodeURIComponent(mapsLink)}` : '';
+      const waMsg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A✅ *Pagado con Mercado Pago*${ubicacionBlock}%0A%0A📎 Comprobante adjunto`;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
       addMsg(`¡Pago listo! 🎉 Para confirmar tu entrega mandanos por WhatsApp:<br><br>1️⃣ Una captura del <strong>comprobante de pago</strong> de MP<br>2️⃣ Este mensaje con tu pedido<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar comprobante + pedido</a>`, 'bot');
     } else {
