@@ -285,7 +285,7 @@ function toggleEdit(idx) { document.getElementById('edit-'+idx).classList.toggle
 
 function toggleStock(idx) {
   products[idx].sinStock = !products[idx].sinStock;
-  save(); render();
+  render();
   showToast(products[idx].sinStock ? 'Marcado sin stock' : 'Producto disponible');
 }
 
@@ -295,8 +295,8 @@ function guardarEdicion(idx) {
   const cat = document.getElementById('ecat-'+idx).value;
   if (!name) { showToast('Escribí el nombre'); return; }
   products[idx] = {...products[idx], name, price, cat};
-  save(); render();
-  showToast('Producto actualizado!');
+  render();
+  showToast('Producto actualizado! Tocá "Guardar todo" para confirmar.');
 }
 
 function eliminar(idx) {
