@@ -290,8 +290,10 @@ let SYSTEM_PROMPT_READY = false;
 async function loadProductsFromDB() {
   try {
     const resp = await fetch('/api/products-get');
-    const data = await resp.json();
-    if (data && Array.isArray(data) && data.length > 0) {
+    const text = await resp.text();
+    const clean = text.trim().replace(/^'+|'+$/g, '');
+    const data = JSON.parse(clean);
+    if (Array.isArray(data) && data.length > 0) {
       PRODUCTS = data;
     }
   } catch(e) {}
