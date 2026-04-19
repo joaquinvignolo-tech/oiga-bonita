@@ -315,9 +315,7 @@ CATALOGO:
 ${PRODUCTS.map(p=>`- ${p.name}: $${p.price.toLocaleString('es-AR')} (${p.cat})`).join('\n')}${promoBlock}
 
 INSTRUCCIONES:
-1. Cuando el cliente confirma o elige un producto SIEMPRE incluí al FINAL de tu respuesta el comando, sin excepción:
-   AGREGAR:[nombre exacto del producto]:[cantidad]
-   Nunca digas "dale", "listo", "anotado" sin incluir el comando AGREGAR. Si no usás el comando, el producto NO se agrega al pedido.
+1. REGLA CRÍTICA: Después de CADA respuesta donde el cliente elige un producto, el ÚLTIMO texto de tu respuesta DEBE ser el comando AGREGAR. Sin excepción. Formato: AGREGAR:[nombre exacto]:[cantidad]. Si no ponés este comando, el producto NO se agrega. NUNCA respondas solo "dale", "listo", "anotado", "perfecto" — siempre con el comando al final.
 2. Para varios productos: AGREGAR:Coca-Cola 500ml:1|AGREGAR:Alfajor Havanna:2
 3. Cuando el cliente quiera confirmar el pedido, respondé SOLO: "¿Tu nombre?" — nada más.
 4. Cuando el cliente dé su nombre, respondé SOLO con el comando sin ningún texto: CONFIRMAR:[nombre]|gps
