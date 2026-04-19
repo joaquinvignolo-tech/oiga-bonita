@@ -428,9 +428,11 @@ function pedirGPS(nombre) {
         total: order.reduce((a,i)=>a+i.price*i.qty,0),
         hora: new Date().toLocaleString('es-AR', {timeZone:'America/Argentina/Cordoba', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
       };
-      const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
-      historial.push(pedidoHistorial);
-      localStorage.setItem('ob_historial', JSON.stringify(historial));
+      fetch('/api/orders-save', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(pedidoHistorial)
+      }).catch(e => console.error('Error guardando pedido:', e));
       window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
       window._mpNombre = nombre;
       order = [];
