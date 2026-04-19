@@ -397,7 +397,11 @@ function confirmarPedidoConNombre(nombre) {
     addMsg('Tu dispositivo no soporta GPS. Por favor escribinos directamente al WhatsApp para coordinar la entrega.', 'bot');
     return;
   }
-  addMsg('Un momento, estamos obteniendo tu ubicacion GPS... ', 'bot');
+  addMsg('Para confirmar el pedido necesitamos tu ubicación GPS. Asegurate de tener el GPS activado y tocá el botón de abajo.<br><br><button onclick="pedirGPS(\'' + nombre + '\')" style="background:var(--rojo);color:#fff;border:none;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer">Compartir ubicación y confirmar</button>', 'bot');
+}
+
+function pedirGPS(nombre) {
+  addMsg('Obteniendo ubicación GPS...', 'user');
   navigator.geolocation.getCurrentPosition(
     function(pos) {
       const lat = pos.coords.latitude.toFixed(6);
