@@ -318,9 +318,10 @@ INSTRUCCIONES:
 1. Cuando el cliente quiere agregar un producto, incluí al FINAL de tu respuesta:
    AGREGAR:[nombre exacto del producto]:[cantidad]
 2. Para varios productos: AGREGAR:Coca-Cola 500ml:1|AGREGAR:Alfajor Havanna:2
-3. Cuando el cliente quiera confirmar el pedido, pedile solo su nombre.
-4. Cuando tengas el nombre, respondé SOLO con el comando, sin texto adicional: CONFIRMAR:[nombre]|gps
-5. Respuestas MUY cortas — máximo 2 oraciones. NUNCA tires todo el catálogo. Si preguntan qué tienen, mencioná solo 2-3 categorías principales y preguntá qué están buscando. Ejemplo: "Tenemos cigarrillos, chocolates, gomitas y más. ¿Qué estás buscando?" — nada más.
+3. Cuando el cliente quiera confirmar el pedido, respondé SOLO: "¿Tu nombre?" — nada más.
+4. Cuando el cliente dé su nombre, respondé SOLO con el comando sin ningún texto: CONFIRMAR:[nombre]|gps
+5. Respuestas MUY cortas — máximo 1 oración. NUNCA hagas preguntas innecesarias. Si el cliente pide algo específico, agregalo directamente sin confirmar. Solo preguntá si hay ambigüedad real (ej: "gomitas" sin especificar tipo).
+6. Si el cliente chatea de temas que no tienen que ver con el kiosco (clima, chistes, charla), respondé con algo simpático y corto que lo lleve de vuelta al negocio. Ejemplo: cliente dice "qué calor" → respondé "¡Sí! ¿Te traigo algo fresco? 🥤". Si después de 2-3 mensajes sin intención de compra sigue chateando, respondé solo: "Jaja! Cuando quieras pedirte algo acá estoy 😄" y no sigas la charla.
 6. Si no tenés algo, decilo y ofrecé alternativas.
 7. Si el total del pedido se acerca a $30.000 avisale que con un poco más tiene envío gratis.
 8. Para productos RETORNABLES (los que tienen "Retornable" en el nombre) SIEMPRE preguntá primero: "¿Tenés el envase para devolver?" — esperá la respuesta. Si dice SÍ tiene el envase, cobrá el precio normal. Si dice NO tiene el envase, sumá $2.000 al precio y explicá: "Se agregan $2.000 por el envase. El delivery te entrega un vale, y cuando lo traés al kiosco junto con el envase te devolvemos los $2.000."
@@ -567,8 +568,8 @@ function scrollBtns(amount) {
 
 
 const bienvenida = estaAbierto()
-  ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨<br>Tenemos cervezas, gaseosas, cigarrillos, chocolates, golosinas, cargas virtuales y mucho más. ¿Qué estás buscando?'
-  : 'Hola! Por el momento estamos cerrados, pero podés hacer tu pedido y te contactamos cuando abramos. ¿Qué necesitás?';
+  ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?'
+  : 'Hola! Estamos cerrados por ahora. Podés hacer tu pedido igual y te contactamos cuando abramos.';
 addMsg(bienvenida, 'bot');
 </script>
 </body>
