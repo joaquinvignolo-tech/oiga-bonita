@@ -326,8 +326,10 @@ REGLAS ESPECIALES:
 Cuando el cliente ELIGE un producto → tu respuesta DEBE terminar con el comando Y una pregunta:
 AGREGAR:[nombre exacto del producto]:[cantidad]
 
-Cuando el cliente quiere confirmar → preguntá SOLO "¿Tu nombre?" si no lo sabés, luego respondé SOLO:
-CONFIRMAR:[nombre]|gps
+Cuando el cliente quiere confirmar:
+- Si no sabés su nombre → preguntá SOLO: "¿Tu nombre?"
+- Cuando tengas el nombre → preguntá SOLO: "¿Cómo vas a pagar? 💵 Efectivo o 📱 Mercado Pago"
+- Cuando diga el método → respondé SOLO con el comando: CONFIRMAR:[nombre]|efectivo o CONFIRMAR:[nombre]|mp
 
 EJEMPLO CORRECTO:
 Cliente: "quiero 2 patagonia ipa"
@@ -402,7 +404,8 @@ function toggleOrderDetail() {
   d.style.display = orderDetailVisible ? 'block' : 'none';
 }
 
-function confirmarPedidoConNombre(nombre) {
+function confirmarPedidoConNombre(nombre, metodo) {
+  window._metodoPago = metodo || 'efectivo';
   if (!navigator.geolocation) {
     addMsg('Tu dispositivo no soporta GPS. Por favor escribinos directamente al WhatsApp para coordinar la entrega.', 'bot');
     return;
@@ -440,7 +443,12 @@ function pedirGPS(nombre) {
       document.getElementById('orderDetail').style.display = 'none';
       orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
-      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
+      const metodo = window._metodoPago || 'efectivo';
+      if (metodo === 'mp') {
+        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar. Cuando vuelvas te pedimos el comprobante.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer">Pagar con Mercado Pago</button>`, 'bot');
+      } else {
+        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a>`, 'bot');
+      }
     },
     function(err) {
       const btnReintentar = `<button onclick="pedirGPS('${nombre}')" style="background:var(--rojo);color:#fff;border:none;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;margin-top:10px">Reintentar</button>`;
@@ -504,11 +512,12 @@ function parseCommands(text) {
     else order.push({name: nombre, price: precio, qty: 1, cat: 'cargas'});
     clean = clean.replace(m[0], '');
   }
-  const confirmMatch = text.match(/CONFIRMAR:([^|]+)\|gps/i);
+  const confirmMatch = text.match(/CONFIRMAR:([^|]+)\|(efectivo|mp|gps)/i);
   if (confirmMatch) {
     window._clienteName = confirmMatch[1].trim();
-    clean = clean.replace(/CONFIRMAR:[^|]+\|gps/i,'').trim();
-    setTimeout(()=> confirmarPedidoConNombre(window._clienteName), 300);
+    window._metodoPago = confirmMatch[2].toLowerCase();
+    clean = clean.replace(/CONFIRMAR:[^|]+\|(efectivo|mp|gps)/i,'').trim();
+    setTimeout(()=> confirmarPedidoConNombre(window._clienteName, window._metodoPago), 300);
   }
   return clean.replace(/\|/g,'').trim();
 }
@@ -526,10 +535,17 @@ async function pagarConMP(btn) {
     });
     const data = await resp.json();
     if (data.init_point) {
+      window._mpInitPoint = data.init_point;
       window.open(data.init_point, '_blank');
-      btn.textContent = 'Abrir Mercado Pago';
+      btn.textContent = 'Abrir Mercado Pago de nuevo';
       btn.disabled = false;
       btn.onclick = () => window.open(data.init_point, '_blank');
+      // Mostrar mensaje de comprobante
+      const lines = (window._mpItems||[]).map(i=>`• ${i.qty}x ${i.name} — $${(i.price*i.qty).toLocaleString('es-AR')}`).join('%0A');
+      const total = (window._mpItems||[]).reduce((a,i)=>a+i.price*i.qty,0);
+      const waMsg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A✅ *Pagado con Mercado Pago*%0A%0A📎 Comprobante adjunto`;
+      const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+      addMsg(`¡Pago listo! 🎉 Para confirmar tu entrega mandanos por WhatsApp:<br><br>1️⃣ Una captura del <strong>comprobante de pago</strong> de MP<br>2️⃣ Este mensaje con tu pedido<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar comprobante + pedido</a>`, 'bot');
     } else {
       btn.textContent = 'Error — intentá de nuevo';
       btn.disabled = false;
