@@ -103,6 +103,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);
     <div class="stat"><div class="stat-num" id="statSinStock" style="color:#ef4444">0</div><div class="stat-label">sin stock</div></div>
   </div>
 
+  <div class="section-title" style="margin-bottom:12px">Estadísticas de ventas</div>
+
+  <div style="display:flex;gap:6px;margin-bottom:16px" id="statTabs">
+    <button class="cat-tab active" onclick="setStatPeriod('hoy',this)">Hoy</button>
+    <button class="cat-tab" onclick="setStatPeriod('semana',this)">Semana</button>
+    <button class="cat-tab" onclick="setStatPeriod('mes',this)">Mes</button>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:14px">
+    <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;border-left:3px solid var(--rojo)">
+      <div style="font-size:12px;color:var(--texto-suave);margin-bottom:4px">Total facturado</div>
+      <div id="st-total" style="font-size:24px;font-weight:500;color:var(--texto)">$0</div>
+      <div id="st-total-sub" style="font-size:11px;color:var(--texto-suave);margin-top:3px">cargando...</div>
+    </div>
+    <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;border-left:3px solid #2563eb">
+      <div style="font-size:12px;color:var(--texto-suave);margin-bottom:4px">Pedidos</div>
+      <div id="st-pedidos" style="font-size:24px;font-weight:500;color:var(--texto)">0</div>
+      <div id="st-pedidos-sub" style="font-size:11px;color:var(--texto-suave);margin-top:3px">cargando...</div>
+    </div>
+    <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;border-left:3px solid #16a34a">
+      <div style="font-size:12px;color:var(--texto-suave);margin-bottom:4px">Ticket promedio</div>
+      <div id="st-ticket" style="font-size:24px;font-weight:500;color:var(--texto)">$0</div>
+      <div style="font-size:11px;color:var(--texto-suave);margin-top:3px">por pedido</div>
+    </div>
+    <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;border-left:3px solid #d97706">
+      <div style="font-size:12px;color:var(--texto-suave);margin-bottom:4px">Producto más pedido</div>
+      <div id="st-top" style="font-size:15px;font-weight:500;color:var(--texto);line-height:1.3;margin-top:4px">—</div>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+    <div class="card" style="background:var(--blanco);border-radius:var(--radio);border:.5px solid var(--gris-borde);padding:14px">
+      <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Top productos</div>
+      <div id="st-top-list" style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--texto-suave)">Cargando...</div>
+    </div>
+    <div class="card" style="background:var(--blanco);border-radius:var(--radio);border:.5px solid var(--gris-borde);padding:14px">
+      <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Por categoría</div>
+      <div id="st-cat-list" style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--texto-suave)">Cargando...</div>
+    </div>
+  </div>
+
+  <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;margin-bottom:14px">
+    <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Horarios pico</div>
+    <div id="st-horas" style="display:flex;gap:3px;align-items:flex-end;height:60px"></div>
+  </div>
+
+  <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;margin-bottom:24px">
+    <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Últimos pedidos</div>
+    <div id="st-pedidos-list"></div>
+  </div>
+
   <div class="section-title">Agregar producto</div>
   <div class="card" style="margin-bottom:20px">
     <div class="form-row">
@@ -189,6 +240,7 @@ async function load() {
   } catch(e) {}
   renderHistorial();
   render();
+  calcStats('hoy');
 }
 
 async function save() {
@@ -353,6 +405,114 @@ function limpiarHistorial() {
 </div>
 
 <script>
+function calcStats(period) {
+  const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
+  const now = ahoraArgentina();
+  
+  const filtered = historial.filter(p => {
+    const [fecha, hora] = p.hora.split(', ');
+    const [dia, mes] = fecha.split('/');
+    const pDate = new Date(now.getFullYear(), parseInt(mes)-1, parseInt(dia));
+    const hoy = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diff = (hoy - pDate) / (1000*60*60*24);
+    if (period === 'hoy') return diff === 0;
+    if (period === 'semana') return diff <= 7;
+    if (period === 'mes') return diff <= 30;
+    return true;
+  });
+
+  const total = filtered.reduce((a,p) => a + (p.total||0), 0);
+  const ticket = filtered.length ? Math.round(total / filtered.length) : 0;
+
+  document.getElementById('st-total').textContent = '$' + total.toLocaleString('es-AR');
+  document.getElementById('st-pedidos').textContent = filtered.length;
+  document.getElementById('st-ticket').textContent = '$' + ticket.toLocaleString('es-AR');
+  document.getElementById('st-total-sub').textContent = filtered.length + ' pedidos en el período';
+  document.getElementById('st-pedidos-sub').textContent = 'total del período';
+
+  // Top productos
+  const prodCount = {};
+  filtered.forEach(p => {
+    (p.detalle || '').split(', ').forEach(item => {
+      const match = item.match(/(\d+)x (.+)/);
+      if (match) {
+        const qty = parseInt(match[1]);
+        const name = match[2];
+        prodCount[name] = (prodCount[name] || 0) + qty;
+      }
+    });
+  });
+  const topProds = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('st-top').textContent = topProds[0] ? topProds[0][0] : '—';
+  const maxP = topProds[0] ? topProds[0][1] : 1;
+  document.getElementById('st-top-list').innerHTML = topProds.length ? topProds.map((([n,v],i) => `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:11px;color:var(--texto-suave);min-width:14px">${i+1}</span>
+      <span style="flex:1;font-size:12px;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${n}</span>
+      <div style="width:60px;height:4px;background:var(--gris);border-radius:2px;overflow:hidden"><div style="width:${Math.round(v/maxP*100)}%;height:100%;background:var(--rojo);border-radius:2px"></div></div>
+      <span style="font-size:11px;color:var(--texto-suave);min-width:30px;text-align:right">${v}u.</span>
+    </div>`)).join('') : '<div style="color:var(--texto-suave);font-size:12px">Sin datos aún</div>';
+
+  // Por categoría
+  const catTotal = {};
+  filtered.forEach(p => {
+    (p.items || []).forEach(item => {
+      const prod = products.find(pr => pr.name === item.name);
+      const cat = prod ? prod.cat : 'otros';
+      catTotal[cat] = (catTotal[cat] || 0) + (item.price * item.qty);
+    });
+  });
+  const topCats = Object.entries(catTotal).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxC = topCats[0] ? topCats[0][1] : 1;
+  document.getElementById('st-cat-list').innerHTML = topCats.length ? topCats.map(([c,v]) => `
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="flex:1;font-size:12px;color:var(--texto)">${c}</span>
+      <div style="width:60px;height:4px;background:var(--gris);border-radius:2px;overflow:hidden"><div style="width:${Math.round(v/maxC*100)}%;height:100%;background:#2563eb;border-radius:2px"></div></div>
+      <span style="font-size:11px;color:var(--texto-suave);min-width:50px;text-align:right">$${v.toLocaleString('es-AR')}</span>
+    </div>`).join('') : '<div style="color:var(--texto-suave);font-size:12px">Sin datos aún</div>';
+
+  // Horarios pico
+  const horas = {};
+  filtered.forEach(p => {
+    const hora = (p.hora || '').split(', ')[1] || '';
+    const h = hora.split(':')[0];
+    if (h) horas[h] = (horas[h] || 0) + 1;
+  });
+  const maxH = Math.max(1, ...Object.values(horas));
+  const horaLabels = ['8','10','12','14','16','18','20','22','0'];
+  document.getElementById('st-horas').innerHTML = horaLabels.map(h => {
+    const v = horas[h] || 0;
+    const pct = Math.round(v/maxH*100);
+    const color = pct > 75 ? 'var(--rojo)' : pct > 40 ? '#f87171' : pct > 10 ? '#fca5a5' : 'var(--gris)';
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
+      <div style="width:100%;background:${color};border-radius:3px;height:${Math.max(4,pct*0.56)}px"></div>
+      <span style="font-size:9px;color:var(--texto-suave)">${h}h</span>
+    </div>`;
+  }).join('');
+
+  // Últimos pedidos
+  const recientes = [...filtered].reverse().slice(0,5);
+  document.getElementById('st-pedidos-list').innerHTML = recientes.length ? recientes.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:.5px solid var(--gris-borde)">
+      <span style="font-size:11px;color:var(--texto-suave);min-width:40px">${(p.hora||'').split(', ')[1]||''}</span>
+      <span style="flex:1;font-size:13px;color:var(--texto);font-weight:500">${p.nombre||'—'}</span>
+      <span style="flex:2;font-size:11px;color:var(--texto-suave);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.detalle||''}</span>
+      <span style="font-size:13px;font-weight:500;color:var(--rojo)">$${(p.total||0).toLocaleString('es-AR')}</span>
+    </div>`).join('') : '<div style="font-size:12px;color:var(--texto-suave);padding:8px 0">No hay pedidos en este período</div>';
+}
+
+function ahoraArgentina() {
+  return new Date(new Date().toLocaleString("en-US", {timeZone: "America/Argentina/Cordoba"}));
+}
+
+let statPeriod = 'hoy';
+function setStatPeriod(period, btn) {
+  statPeriod = period;
+  document.querySelectorAll('#statTabs .cat-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  calcStats(period);
+}
+
 function cerrarSesion() {
   sessionStorage.removeItem('ob_auth');
   document.getElementById('adminContent').style.display = 'none';
