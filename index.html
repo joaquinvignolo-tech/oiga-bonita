@@ -323,19 +323,19 @@ REGLAS ESPECIALES:
 - Si el nombre del cliente aparece en la conversación, úsalo al confirmar sin pedirlo de nuevo.
 
 ⚠️ COMANDOS OBLIGATORIOS — NUNCA IGNORAR:
-Cuando el cliente ELIGE un producto → tu respuesta DEBE terminar con:
+Cuando el cliente ELIGE un producto → tu respuesta DEBE terminar con el comando Y una pregunta:
 AGREGAR:[nombre exacto del producto]:[cantidad]
 
 Cuando el cliente quiere confirmar → preguntá SOLO "¿Tu nombre?" si no lo sabés, luego respondé SOLO:
 CONFIRMAR:[nombre]|gps
 
 EJEMPLO CORRECTO:
-Cliente: "quiero patagonia ipa"
-Vos: "¡Va! AGREGAR:Patagonia IPA:1"
+Cliente: "quiero 2 patagonia ipa"
+Vos: "¡Dale! 2 Patagonia IPA $8.000. ¿Algo más o confirmamos? AGREGAR:Patagonia IPA:2"
 
 EJEMPLO INCORRECTO (NUNCA HACER):
 Cliente: "quiero patagonia ipa"  
-Vos: "Dale 🍺" ← ESTO ESTÁ MAL, NO AGREGA EL PRODUCTO`;
+Vos: "Dale 🍺" ← ESTO ESTÁ MAL, NO AGREGA EL PRODUCTO Y NO DICE QUÉ HACER DESPUÉS`;
 }
 
 
