@@ -537,7 +537,10 @@ async function pagarConMP(btn) {
     const data = await resp.json();
     if (data.init_point) {
       window._mpInitPoint = data.init_point;
-      window.open(data.init_point, '_blank');
+      localStorage.setItem('ob_mp_nombre', nombre);
+      localStorage.setItem('ob_mp_items', JSON.stringify(items));
+      localStorage.setItem('ob_mp_maps', window._mpMapsLink || '');
+      window.location.href = data.init_point;
       btn.textContent = 'Abrir Mercado Pago de nuevo';
       btn.disabled = false;
       btn.onclick = () => window.open(data.init_point, '_blank');
@@ -634,10 +637,32 @@ function scrollBtns(amount) {
   el.scrollBy({ left: amount, behavior: 'smooth' });
 }
 
-const bienvenida = estaAbierto()
-  ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?'
-  : 'Hola! Estamos cerrados por ahora. Podés hacer tu pedido igual y te contactamos cuando abramos.';
-addMsg(bienvenida, 'bot');
+const urlParams = new URLSearchParams(window.location.search);
+const estadoPago = urlParams.get('pago');
+
+if (estadoPago === 'ok') {
+  const nombreGuardado = localStorage.getItem('ob_mp_nombre') || 'Cliente';
+  const itemsGuardados = JSON.parse(localStorage.getItem('ob_mp_items') || '[]');
+  const mapsGuardado = localStorage.getItem('ob_mp_maps') || '';
+  const lines = itemsGuardados.map(i=>`• ${i.qty}x ${i.name} — $${(i.price*i.qty).toLocaleString('es-AR')}`).join('%0A');
+  const total = itemsGuardados.reduce((a,i)=>a+i.price*i.qty,0);
+  const ubicacionBlock = mapsGuardado ? `%0A%0A📍 *Ubicacion:*%0A${encodeURIComponent(mapsGuardado)}` : '';
+  const waMsg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombreGuardado}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A✅ *Pagado con Mercado Pago*${ubicacionBlock}%0A%0A📎 Comprobante adjunto`;
+  const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
+  addMsg(`¡Pago aprobado! 🎉<br><br>Para confirmar tu entrega mandanos por WhatsApp:<br>1️⃣ Una captura del <strong>comprobante de MP</strong><br>2️⃣ Este mensaje con tu pedido<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar comprobante + pedido</a>`, 'bot');
+  localStorage.removeItem('ob_mp_nombre');
+  localStorage.removeItem('ob_mp_items');
+  localStorage.removeItem('ob_mp_maps');
+  history.replaceState({}, '', '/');
+} else if (estadoPago === 'error') {
+  addMsg('Hubo un problema con el pago. Podés intentar de nuevo o pagar en efectivo cuando llegue el delivery.', 'bot');
+  history.replaceState({}, '', '/');
+} else {
+  const bienvenida = estaAbierto()
+    ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?'
+    : 'Hola! Estamos cerrados por ahora. Podés hacer tu pedido igual y te contactamos cuando abramos.';
+  addMsg(bienvenida, 'bot');
+}
 </script>
 </body>
 </html>
