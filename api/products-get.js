@@ -13,7 +13,10 @@ export default async function handler(req, res) {
     const data = await response.json();
     if (data.result) {
       let parsed = data.result;
-      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+      if (typeof parsed === 'string') {
+        parsed = parsed.replace(/^'|'$/g, '');
+        parsed = JSON.parse(parsed);
+      }
       res.status(200).json(parsed);
     } else {
       res.status(200).json(null);
