@@ -170,21 +170,46 @@ const DEFAULT_PRODUCTS = [{"name": "Philip Morris 20 KS", "price": 5500, "cat": 
 let products = [];
 let filtroActivo = 'todos';
 
-function load() {
-  const saved = localStorage.getItem('ob_products');
-  products = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
-  const promos = localStorage.getItem('ob_promos');
-  if (promos) document.getElementById('promoText').value = promos;
+async function load() {
+  showToast('Cargando productos...');
+  try {
+    const resp = await fetch('/api/products-get');
+    const data = await resp.json();
+    products = data && Array.isArray(data) ? data : JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  } catch(e) {
+    products = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+  }
+  try {
+    const resp2 = await fetch('/api/promos-get');
+    const data2 = await resp2.json();
+    if (data2.promos) document.getElementById('promoText').value = data2.promos;
+  } catch(e) {}
   renderHistorial();
   render();
 }
 
-function save() { localStorage.setItem('ob_products', JSON.stringify(products)); }
+async function save() {
+  try {
+    await fetch('/api/products-save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ products })
+    });
+  } catch(e) { showToast('Error al guardar en la nube'); }
+}
 
-function guardarTodo() { save(); showToast('Todo guardado!'); }
-function guardarPromos() {
-  localStorage.setItem('ob_promos', document.getElementById('promoText').value.trim());
-  showToast('Promos guardadas! La IA ya las conoce.');
+async function guardarTodo() { await save(); showToast('Guardado en la nube!'); }
+
+async function guardarPromos() {
+  const promos = document.getElementById('promoText').value.trim();
+  try {
+    await fetch('/api/products-save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ promos })
+    });
+    showToast('Promos guardadas! La IA ya las conoce.');
+  } catch(e) { showToast('Error al guardar promos'); }
 }
 
 function showToast(msg) {
