@@ -420,8 +420,15 @@ async function limpiarHistorial() {
 </div>
 
 <script>
-function calcStats(period) {
-  const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
+async function calcStats(period) {
+  let historial = [];
+  try {
+    const resp = await fetch('/api/orders-get');
+    const text = await resp.text();
+    const clean = text.trim().replace(/^'+|'+$/g, '');
+    const data = JSON.parse(clean);
+    if (Array.isArray(data)) historial = data;
+  } catch(e) { historial = []; }
   const now = ahoraArgentina();
   
   const filtered = historial.filter(p => {
