@@ -338,4 +338,246 @@ Cliente: "quiero patagonia ipa"
 Vos: "Dale 🍺" ← ESTO ESTÁ MAL, NO AGREGA EL PRODUCTO`;
 }
 
->
+
+const SYSTEM_PROMPT = buildSystemPrompt();
+
+let order = [];
+let history = [];
+let isLoading = false;
+let orderDetailVisible = false;
+
+function addMsg(html, who) {
+  const w = document.getElementById('chatWindow');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + who;
+  if (who === 'bot') {
+    const name = document.createElement('div');
+    name.className = 'sender-name';
+    name.textContent = 'Oiga Bonita';
+    wrap.appendChild(name);
+  }
+  const b = document.createElement('div');
+  b.className = 'bubble ' + who;
+  b.innerHTML = html;
+  wrap.appendChild(b);
+  w.appendChild(wrap);
+  w.scrollTop = w.scrollHeight;
+  return b;
+}
+
+function addTyping() {
+  const w = document.getElementById('chatWindow');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap bot';
+  const name = document.createElement('div');
+  name.className = 'sender-name';
+  name.textContent = 'Oiga Bonita';
+  wrap.appendChild(name);
+  const b = document.createElement('div');
+  b.className = 'bubble bot';
+  b.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
+  wrap.appendChild(b);
+  w.appendChild(wrap);
+  w.scrollTop = w.scrollHeight;
+  return b;
+}
+
+function updateOrderUI() {
+  const bar = document.getElementById('orderBar');
+  if (order.length === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'block';
+  const qty = order.reduce((a,i)=>a+i.qty,0);
+  const total = order.reduce((a,i)=>a+i.price*i.qty,0);
+  document.getElementById('orderCount').textContent = qty;
+  document.getElementById('orderTotalBar').textContent = '$' + total.toLocaleString('es-AR');
+  document.getElementById('orderTotalDetail').textContent = '$' + total.toLocaleString('es-AR');
+  document.getElementById('orderItems').innerHTML = order.map(i =>
+    `<div class="order-item-row"><span>${i.qty}x ${i.name}</span><span>$${(i.price*i.qty).toLocaleString('es-AR')}</span></div>`
+  ).join('');
+}
+
+function toggleOrderDetail() {
+  const d = document.getElementById('orderDetail');
+  orderDetailVisible = !orderDetailVisible;
+  d.style.display = orderDetailVisible ? 'block' : 'none';
+}
+
+function confirmarPedidoConNombre(nombre) {
+  if (!navigator.geolocation) {
+    addMsg('Tu dispositivo no soporta GPS. Por favor escribinos directamente al WhatsApp para coordinar la entrega.', 'bot');
+    return;
+  }
+  const btnGPS = `<button onclick="pedirGPS('${nombre}')" style="background:var(--rojo);color:#fff;border:none;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;cursor:pointer">Compartir ubicación y confirmar</button>`;
+  addMsg('Para confirmar necesitamos tu ubicación GPS. Activá el GPS y tocá el botón:<br><br>' + btnGPS, 'bot');
+}
+
+function pedirGPS(nombre) {
+  addMsg('Obteniendo ubicación GPS...', 'user');
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lon = pos.coords.longitude.toFixed(6);
+      const mapsLink = `https://maps.google.com/?q=${lat},${lon}`;
+      const lines = order.map(i=>`• ${i.qty}x ${i.name} — $${(i.price*i.qty).toLocaleString('es-AR')}`).join('%0A');
+      const total = order.reduce((a,i)=>a+i.price*i.qty,0);
+      const msg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A📍 *Ubicacion:*%0A${encodeURIComponent(mapsLink)}`;
+      const pedidoHistorial = {
+        nombre: nombre,
+        detalle: order.map(i=>`${i.qty}x ${i.name}`).join(', '),
+        items: order.map(i=>({name:i.name, price:i.price, qty:i.qty})),
+        total: order.reduce((a,i)=>a+i.price*i.qty,0),
+        hora: new Date().toLocaleString('es-AR', {timeZone:'America/Argentina/Cordoba', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
+      };
+      const historial = JSON.parse(localStorage.getItem('ob_historial') || '[]');
+      historial.push(pedidoHistorial);
+      localStorage.setItem('ob_historial', JSON.stringify(historial));
+      window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
+      window._mpNombre = nombre;
+      order = [];
+      updateOrderUI();
+      document.getElementById('orderDetail').style.display = 'none';
+      orderDetailVisible = false;
+      const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
+      addMsg(`Tu pedido esta listo! Elegí cómo querés pagar:<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Pagar en efectivo (WhatsApp)</a><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer;margin-top:8px">Pagar con Mercado Pago</button>`, 'bot');
+    },
+    function(err) {
+      let msg = 'Para poder entregarte el pedido necesitamos tu ubicacion GPS. ';
+      if (err.code === 1) msg += 'Parece que bloqueaste el permiso — habilitalo en la configuracion de tu celular e intentá de nuevo.';
+      else msg += 'No pudimos obtener tu ubicacion. Verifica que el GPS este activado e intenta de nuevo.';
+      addMsg(msg, 'bot');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function confirmarPedido() {
+  if (order.length === 0) return;
+  confirmarPedidoConNombre(window._clienteName || 'Cliente');
+}
+
+function parseCommands(text) {
+  let clean = text;
+  const adds = [...text.matchAll(/AGREGAR:([^:|]+):(\d+)/g)];
+  for (const m of adds) {
+    const name = m[1].trim();
+    const qty = parseInt(m[2]);
+    const prod = PRODUCTS.find(p=>p.name.toLowerCase()===name.toLowerCase());
+    if (prod) {
+      const ex = order.find(i=>i.name===prod.name);
+      if (ex) ex.qty += qty;
+      else order.push({...prod, qty});
+    }
+    clean = clean.replace(m[0],'');
+  }
+  const cargaMatches = [...text.matchAll(/CARGA:([^:]+):(\d+)/g)];
+  for (const m of cargaMatches) {
+    const nombre = m[1].trim();
+    const precio = parseInt(m[2]);
+    const ex = order.find(i=>i.name===nombre);
+    if (ex) ex.price = precio;
+    else order.push({name: nombre, price: precio, qty: 1, cat: 'cargas'});
+    clean = clean.replace(m[0], '');
+  }
+  const confirmMatch = text.match(/CONFIRMAR:([^|]+)\|gps/i);
+  if (confirmMatch) {
+    window._clienteName = confirmMatch[1].trim();
+    clean = clean.replace(/CONFIRMAR:[^|]+\|gps/i,'').trim();
+    setTimeout(()=> confirmarPedidoConNombre(window._clienteName), 300);
+  }
+  return clean.replace(/\|/g,'').trim();
+}
+
+async function pagarConMP(btn) {
+  btn.textContent = 'Generando link...';
+  btn.disabled = true;
+  try {
+    const items = window._mpItems || [];
+    const nombre = window._mpNombre || 'Cliente';
+    const resp = await fetch('/api/payment', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ items, payer_name: nombre })
+    });
+    const data = await resp.json();
+    if (data.init_point) {
+      window.open(data.init_point, '_blank');
+      btn.textContent = 'Abrir Mercado Pago';
+      btn.disabled = false;
+      btn.onclick = () => window.open(data.init_point, '_blank');
+    } else {
+      btn.textContent = 'Error — intentá de nuevo';
+      btn.disabled = false;
+    }
+  } catch(e) {
+    btn.textContent = 'Error — intentá de nuevo';
+    btn.disabled = false;
+  }
+}
+
+async function callClaude(userMsg) {
+  history.push({role:'user', content: userMsg});
+  const resp = await fetch('/api/chat', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:400,
+      system: buildSystemPrompt(),
+      messages: history
+    })
+  });
+  if (!resp.ok) throw new Error('API error ' + resp.status);
+  const data = await resp.json();
+  const raw = data.content?.[0]?.text || 'Perdona, hubo un problema. Intenta de nuevo.';
+  history.push({role:'assistant', content: raw});
+  return raw;
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('userInput');
+  const btn = document.getElementById('sendBtn');
+  const txt = inp.value.trim();
+  if (!txt || isLoading) return;
+  inp.value = '';
+  btn.disabled = true;
+  addMsg(txt, 'user');
+  isLoading = true;
+  inp.disabled = true;
+  const typing = addTyping();
+  try {
+    const raw = await callClaude(txt);
+    const clean = parseCommands(raw);
+    updateOrderUI();
+    typing.innerHTML = clean.replace(/\n/g,'<br>');
+  } catch(e) {
+    typing.innerHTML = 'Hubo un error de conexion. Intenta de nuevo.';
+  }
+  isLoading = false;
+  inp.disabled = false;
+  btn.disabled = false;
+  inp.focus();
+  document.getElementById('chatWindow').scrollTop = 99999;
+}
+
+function sendQuick(txt) {
+  document.getElementById('userInput').value = txt;
+  document.getElementById('sendBtn').disabled = false;
+  sendMsg();
+}
+
+document.getElementById('userInput').addEventListener('input', function() {
+  document.getElementById('sendBtn').disabled = this.value.trim() === '';
+});
+
+function scrollBtns(amount) {
+  const el = document.getElementById('quickArea');
+  el.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
+const bienvenida = estaAbierto()
+  ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?'
+  : 'Hola! Estamos cerrados por ahora. Podés hacer tu pedido igual y te contactamos cuando abramos.';
+addMsg(bienvenida, 'bot');
+</script>
+</body>
+</html>
