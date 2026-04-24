@@ -29,9 +29,9 @@ export default async function handler(req, res) {
     statement_descriptor: 'OIGA BONITA',
     external_reference: `OB-${Date.now()}`,
     back_urls: {
-      success: 'https://oiga-bonita.vercel.app?pago=ok',
-      failure: 'https://oiga-bonita.vercel.app?pago=error',
-      pending: 'https://oiga-bonita.vercel.app?pago=pendiente'
+      success: 'https://www.oigabonita.com.ar?pago=ok',
+      failure: 'https://www.oigabonita.com.ar?pago=error',
+      pending: 'https://www.oigabonita.com.ar?pago=pendiente'
     },
     auto_return: 'approved'
   };
