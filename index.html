@@ -186,6 +186,12 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
     <div class="order-hint">Tocá para ver o confirmar</div>
   </div>
 
+  <div id="carrusel" style="display:none;width:100%;overflow:hidden;position:relative;background:#000;max-height:180px">
+    <div id="carruselTrack" style="display:flex;transition:transform .4s ease;height:180px"></div>
+    <button onclick="carruselPrev()" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">‹</button>
+    <button onclick="carruselNext()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">›</button>
+    <div id="carruselDots" style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:2"></div>
+  </div>
   <div class="chat-window" id="chatWindow"></div>
 
   <div style="display:flex;align-items:center;background:var(--blanco);border-top:1px solid var(--gris-borde);flex-shrink:0">
@@ -322,6 +328,7 @@ async function loadProductsFromDB() {
 }
 
 loadProductsFromDB();
+loadCarrusel();
 
 function buildSystemPrompt() {
   const promoBlock = window._obPromos ? `\n\nPROMOCIONES ACTIVAS HOY:\n${window._obPromos}\n(Mencioná las promos de forma natural. Si el pedido supera $30.000 avisá que el envío es gratis.)` : '';
@@ -654,6 +661,60 @@ document.getElementById('userInput').addEventListener('input', function() {
 function scrollBtns(amount) {
   const el = document.getElementById('quickArea');
   el.scrollBy({ left: amount, behavior: 'smooth' });
+}
+
+// ═══ CARRUSEL ═══
+let carruselIndex = 0;
+let carruselFotos = [];
+let carruselTimer = null;
+
+async function loadCarrusel() {
+  try {
+    const resp = await fetch('/api/promos-get');
+    const data = await resp.json();
+    if (data.fotos && Array.isArray(data.fotos) && data.fotos.length > 0) {
+      carruselFotos = data.fotos.filter(f => f.activa);
+      if (carruselFotos.length > 0) renderCarrusel();
+    }
+  } catch(e) {}
+}
+
+function renderCarrusel() {
+  const wrap = document.getElementById('carrusel');
+  const track = document.getElementById('carruselTrack');
+  const dots = document.getElementById('carruselDots');
+  if (!wrap || carruselFotos.length === 0) return;
+  
+  wrap.style.display = 'block';
+  track.innerHTML = carruselFotos.map(f => `
+    <div style="min-width:100%;height:180px;flex-shrink:0;position:relative">
+      <img src="${f.url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
+      ${f.texto ? `<div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.7));padding:8px 12px;color:#fff;font-size:13px;font-weight:500">${f.texto}</div>` : ''}
+    </div>`).join('');
+  
+  dots.innerHTML = carruselFotos.map((_,i) => 
+    `<div onclick="goCarrusel(${i})" style="width:6px;height:6px;border-radius:50%;background:${i===0?'#fff':'rgba(255,255,255,.4)'};cursor:pointer;transition:background .3s"></div>`
+  ).join('');
+  
+  if (carruselFotos.length > 1) {
+    carruselTimer = setInterval(() => carruselNext(), 4000);
+  }
+}
+
+function goCarrusel(n) {
+  carruselIndex = n;
+  const track = document.getElementById('carruselTrack');
+  if (track) track.style.transform = `translateX(-${n*100}%)`;
+  document.querySelectorAll('#carruselDots div').forEach((d,i) => {
+    d.style.background = i===n ? '#fff' : 'rgba(255,255,255,.4)';
+  });
+}
+
+function carruselNext() {
+  goCarrusel((carruselIndex + 1) % carruselFotos.length);
+}
+function carruselPrev() {
+  goCarrusel((carruselIndex - 1 + carruselFotos.length) % carruselFotos.length);
 }
 
 const urlParams = new URLSearchParams(window.location.search);
