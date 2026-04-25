@@ -33,7 +33,7 @@ export default async function handler(req, res) {
       failure: 'https://www.oigabonita.com.ar?pago=error',
       pending: 'https://www.oigabonita.com.ar?pago=pendiente'
     },
-    auto_return: 'approved'
+    // auto_return desactivado - cliente vuelve manualmente
   };
 
   try {
