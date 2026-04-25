@@ -5,7 +5,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { products, promos } = req.body;
+    const { products, promos, fotos } = req.body;
 
     if (products !== undefined) {
       const serialized = JSON.stringify(products);
@@ -29,6 +29,17 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(promos)
+      });
+    }
+
+    if (fotos !== undefined) {
+      await fetch(`${process.env.KV_REST_API_URL}/set/ob_fotos`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(JSON.stringify(fotos))
       });
     }
 
