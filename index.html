@@ -545,6 +545,9 @@ async function pagarConMP(btn) {
       localStorage.setItem('ob_mp_nombre', nombre);
       localStorage.setItem('ob_mp_items', JSON.stringify(items));
       localStorage.setItem('ob_mp_maps', window._mpMapsLink || '');
+      // Guardar historial del chat para restaurar si el cliente vuelve
+      const chatWindow = document.getElementById('chatWindow');
+      localStorage.setItem('ob_mp_chat', chatWindow ? chatWindow.innerHTML : '');
       window.location.href = data.init_point;
       btn.textContent = 'Abrir Mercado Pago de nuevo';
       btn.disabled = false;
@@ -659,7 +662,12 @@ if (estadoPago === 'ok') {
   localStorage.removeItem('ob_mp_items');
   localStorage.removeItem('ob_mp_maps');
   history.replaceState({}, '', '/');
-} else if (estadoPago === 'error') {
+} else if (estadoPago === 'error' || estadoPago === 'pendiente') {
+  const chatGuardado = localStorage.getItem('ob_mp_chat');
+  if (chatGuardado) {
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) chatWindow.innerHTML = chatGuardado;
+  }
   addMsg('Hubo un problema con el pago. Podés intentar de nuevo o pagar en efectivo cuando llegue el delivery.', 'bot');
   history.replaceState({}, '', '/');
 } else {
