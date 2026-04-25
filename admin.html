@@ -186,17 +186,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);
 
   <div class="section-title">Fotos del carrusel</div>
   <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:16px;margin-bottom:20px">
-    <div style="font-size:13px;color:var(--texto-suave);margin-bottom:12px">Agregá fotos para mostrar en la app. Pegá la URL de cualquier imagen de internet.</div>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input id="fotoUrl" type="url" placeholder="https://... (URL de la imagen)" style="flex:1;padding:8px 12px;border:.5px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;font-family:var(--font)"/>
-      <input id="fotoTexto" type="text" placeholder="Texto opcional (ej: Promo del finde)" style="flex:1;padding:8px 12px;border:.5px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;font-family:var(--font)"/>
-      <button onclick="agregarFoto()" style="background:var(--rojo);color:#fff;border:none;padding:8px 16px;border-radius:var(--radio);font-size:13px;cursor:pointer;font-weight:500;white-space:nowrap">+ Agregar</button>
+    <div style="font-size:13px;color:var(--texto-suave);margin-bottom:12px">Subí fotos desde tu celular o PC. Se muestran en el carrusel de la app.</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <label style="background:var(--rojo);color:#fff;padding:8px 16px;border-radius:var(--radio);font-size:13px;cursor:pointer;font-weight:500;white-space:nowrap">
+        📷 Subir foto
+        <input type="file" id="fotoFile" accept="image/*" onchange="subirFoto(this)" style="display:none"/>
+      </label>
+      <input id="fotoTexto" type="text" placeholder="Texto opcional (ej: Promo del finde)" style="flex:1;min-width:180px;padding:8px 12px;border:.5px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;font-family:var(--font)"/>
     </div>
+    <div id="uploadProgress" style="display:none;font-size:12px;color:var(--texto-suave);margin-bottom:8px">Subiendo...</div>
     <div id="fotosGrid" style="display:flex;flex-direction:column;gap:8px"></div>
-    <button onclick="guardarFotos()" style="margin-top:12px;background:var(--rojo);color:#fff;border:none;padding:10px 20px;border-radius:var(--radio);font-size:13px;cursor:pointer;font-weight:500">Guardar fotos</button>
   </div>
-
-  <div class="section-title">Promociones activas</div>
+    <div class="section-title">Promociones activas</div>
   <div class="card" style="margin-bottom:20px">
     <h3>La IA menciona estas promos automáticamente a los clientes</h3>
     <textarea id="promoText" rows="4" style="width:100%;padding:10px 12px;border-radius:10px;border:1.5px solid var(--gris-borde);background:var(--gris);color:var(--texto);font-size:13px;font-family:'DM Sans',sans-serif;outline:none;resize:vertical;line-height:1.6;transition:border-color .15s" placeholder="Ej: Envío gratis en pedidos mayores a $30.000&#10;Combo merienda: gaseosa + 2 alfajores por $2.000&#10;2x1 en gomitas hasta las 20hs" onfocus="this.style.borderColor='var(--rojo)'" onblur="this.style.borderColor='var(--gris-borde)'"></textarea>
@@ -584,18 +585,46 @@ function renderFotos() {
         ${f.texto ? `<div style="font-size:11px;color:var(--texto-suave)">${f.texto}</div>` : ''}
       </div>
       <button onclick="toggleFoto(${i})" style="background:${f.activa?'#16a34a':'#888'};color:#fff;border:none;padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer">${f.activa?'Activa':'Inactiva'}</button>
-      <button onclick="eliminarFoto(${i})" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px">×</button>
+      <button onclick="eliminarFotoCompleta(${i})" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px">×</button>
     </div>`).join('');
 }
 
-function agregarFoto() {
-  const url = document.getElementById('fotoUrl').value.trim();
+async function subirFoto() {
+  const fileInput = document.getElementById('fotoFile');
   const texto = document.getElementById('fotoTexto').value.trim();
-  if (!url) return;
-  fotosCarrusel.push({ url, texto, activa: true });
-  document.getElementById('fotoUrl').value = '';
-  document.getElementById('fotoTexto').value = '';
-  renderFotos();
+  const file = fileInput.files[0];
+  if (!file) { showToast('Seleccioná una imagen primero'); return; }
+  
+  const btn = document.getElementById('btnSubir');
+  const progress = document.getElementById('uploadProgress');
+  btn.disabled = true;
+  btn.textContent = 'Subiendo...';
+  progress.style.display = 'block';
+  
+  try {
+    const resp = await fetch('/api/upload-foto', {
+      method: 'POST',
+      headers: { 'x-filename': `foto-${Date.now()}-${file.name}` },
+      body: file
+    });
+    const data = await resp.json();
+    if (data.url) {
+      fotosCarrusel.push({ url: data.url, texto, activa: true });
+      fileInput.value = '';
+      document.getElementById('fotoTexto').value = '';
+      renderFotos();
+      await guardarFotos();
+      showToast('Foto subida y guardada!');
+    } else {
+      showToast('Error al subir la foto');
+    }
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '⬆ Subir';
+  progress.style.display = 'none';
 }
 
 function toggleFoto(i) {
@@ -606,6 +635,39 @@ function toggleFoto(i) {
 function eliminarFoto(i) {
   fotosCarrusel.splice(i, 1);
   renderFotos();
+}
+
+async function subirFoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const texto = document.getElementById('fotoTexto').value.trim();
+  const progress = document.getElementById('uploadProgress');
+  progress.style.display = 'block';
+  progress.textContent = 'Subiendo...';
+  try {
+    const resp = await fetch('/api/fotos-upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': file.type,
+        'x-filename': `foto-${Date.now()}-${file.name}`
+      },
+      body: file
+    });
+    const data = await resp.json();
+    if (data.url) {
+      fotosCarrusel.push({ url: data.url, texto, activa: true });
+      document.getElementById('fotoTexto').value = '';
+      input.value = '';
+      await guardarFotos();
+      renderFotos();
+      progress.style.display = 'none';
+      showToast('Foto subida!');
+    } else {
+      progress.textContent = 'Error al subir';
+    }
+  } catch(e) {
+    progress.textContent = 'Error: ' + e.message;
+  }
 }
 
 async function guardarFotos() {
@@ -619,6 +681,24 @@ async function guardarFotos() {
   } catch(e) {
     showToast('Error al guardar fotos');
   }
+}
+
+async function eliminarFotoCompleta(i) {
+  const foto = fotosCarrusel[i];
+  // Borrar de Vercel Blob si es una URL de blob
+  if (foto.url && foto.url.includes('vercel-storage')) {
+    try {
+      await fetch('/api/fotos-upload', {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ url: foto.url })
+      });
+    } catch(e) {}
+  }
+  fotosCarrusel.splice(i, 1);
+  await guardarFotos();
+  renderFotos();
+  showToast('Foto eliminada');
 }
 
 function cerrarSesion() {
