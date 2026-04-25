@@ -246,6 +246,17 @@ function estaAbierto() {
   const now = ahoraArgentina();
   const dia = now.getDay();
   const hora = now.getHours() + now.getMinutes() / 60;
+  
+  // Verificar si estamos en la madrugada que corresponde al cierre del día anterior
+  // Ej: sábado 00:30 puede ser el cierre del viernes (que cierra a las 25 = 01:00)
+  if (hora < 6) {
+    const diaAnterior = (dia + 6) % 7;
+    const hAnterior = HORARIOS[diaAnterior];
+    if (hAnterior.cierra > 24 && hora < (hAnterior.cierra - 24)) {
+      return true;
+    }
+  }
+  
   const h = HORARIOS[dia];
   return hora >= h.abre && hora < h.cierra;
 }
