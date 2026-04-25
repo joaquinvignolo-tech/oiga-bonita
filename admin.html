@@ -184,6 +184,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);
     </div>
   </div>
 
+  <div class="section-title">Fotos del carrusel</div>
+  <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:16px;margin-bottom:20px">
+    <div style="font-size:13px;color:var(--texto-suave);margin-bottom:12px">Agregá fotos para mostrar en la app. Pegá la URL de cualquier imagen de internet.</div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <input id="fotoUrl" type="url" placeholder="https://... (URL de la imagen)" style="flex:1;padding:8px 12px;border:.5px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;font-family:var(--font)"/>
+      <input id="fotoTexto" type="text" placeholder="Texto opcional (ej: Promo del finde)" style="flex:1;padding:8px 12px;border:.5px solid var(--gris-borde);border-radius:var(--radio);font-size:13px;font-family:var(--font)"/>
+      <button onclick="agregarFoto()" style="background:var(--rojo);color:#fff;border:none;padding:8px 16px;border-radius:var(--radio);font-size:13px;cursor:pointer;font-weight:500;white-space:nowrap">+ Agregar</button>
+    </div>
+    <div id="fotosGrid" style="display:flex;flex-direction:column;gap:8px"></div>
+    <button onclick="guardarFotos()" style="margin-top:12px;background:var(--rojo);color:#fff;border:none;padding:10px 20px;border-radius:var(--radio);font-size:13px;cursor:pointer;font-weight:500">Guardar fotos</button>
+  </div>
+
   <div class="section-title">Promociones activas</div>
   <div class="card" style="margin-bottom:20px">
     <h3>La IA menciona estas promos automáticamente a los clientes</h3>
@@ -248,6 +260,7 @@ async function load() {
   renderHistorial();
   render();
   calcStats('hoy');
+  loadFotos();
 }
 
 async function save() {
@@ -540,6 +553,72 @@ function setStatPeriod(period, btn) {
   document.querySelectorAll('#statTabs .cat-tab').forEach(t => t.classList.remove('active'));
   btn.classList.add('active');
   calcStats(period);
+}
+
+// ═══ FOTOS CARRUSEL ═══
+let fotosCarrusel = [];
+
+async function loadFotos() {
+  try {
+    const resp = await fetch('/api/promos-get');
+    const data = await resp.json();
+    if (data.fotos && Array.isArray(data.fotos)) {
+      fotosCarrusel = data.fotos;
+      renderFotos();
+    }
+  } catch(e) {}
+}
+
+function renderFotos() {
+  const grid = document.getElementById('fotosGrid');
+  if (!grid) return;
+  if (fotosCarrusel.length === 0) {
+    grid.innerHTML = '<div style="font-size:12px;color:var(--texto-suave);padding:8px 0">No hay fotos cargadas.</div>';
+    return;
+  }
+  grid.innerHTML = fotosCarrusel.map((f,i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--gris);border-radius:var(--radio)">
+      <img src="${f.url}" style="width:60px;height:45px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'"/>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--texto);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.url}</div>
+        ${f.texto ? `<div style="font-size:11px;color:var(--texto-suave)">${f.texto}</div>` : ''}
+      </div>
+      <button onclick="toggleFoto(${i})" style="background:${f.activa?'#16a34a':'#888'};color:#fff;border:none;padding:4px 10px;border-radius:12px;font-size:11px;cursor:pointer">${f.activa?'Activa':'Inactiva'}</button>
+      <button onclick="eliminarFoto(${i})" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:16px">×</button>
+    </div>`).join('');
+}
+
+function agregarFoto() {
+  const url = document.getElementById('fotoUrl').value.trim();
+  const texto = document.getElementById('fotoTexto').value.trim();
+  if (!url) return;
+  fotosCarrusel.push({ url, texto, activa: true });
+  document.getElementById('fotoUrl').value = '';
+  document.getElementById('fotoTexto').value = '';
+  renderFotos();
+}
+
+function toggleFoto(i) {
+  fotosCarrusel[i].activa = !fotosCarrusel[i].activa;
+  renderFotos();
+}
+
+function eliminarFoto(i) {
+  fotosCarrusel.splice(i, 1);
+  renderFotos();
+}
+
+async function guardarFotos() {
+  try {
+    await fetch('/api/products-save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ fotos: fotosCarrusel })
+    });
+    showToast('Fotos guardadas!');
+  } catch(e) {
+    showToast('Error al guardar fotos');
+  }
 }
 
 function cerrarSesion() {
