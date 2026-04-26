@@ -359,6 +359,8 @@ Cuando el cliente quiere confirmar:
 - Si no sabés su nombre → preguntá SOLO: "¿Tu nombre?"
 - Cuando tengas el nombre → preguntá SOLO: "¿Cómo vas a pagar? 💵 Efectivo o 📱 Mercado Pago"
 - Cuando diga el método → respondé SOLO con el comando sin NINGÚN texto adicional: CONFIRMAR:[nombre]|efectivo o CONFIRMAR:[nombre]|mp
+- Para ELIMINAR un producto del pedido usá: SACAR:[nombre exacto del producto]
+- Para MODIFICAR cantidad, usá SACAR primero y después AGREGAR con la cantidad nueva
 - NUNCA describas el pedido ni digas "tu pedido está confirmado" — el sistema lo maneja automáticamente
 - NUNCA digas que no podés generar links de pago — el sistema los genera solo cuando usás el comando
 - NUNCA digas que el link "ya llegó" o "debería haber llegado" — si el cliente no lo ve, es porque el sistema no ejecutó el comando todavía
@@ -546,6 +548,14 @@ function parseCommands(text) {
     }
     clean = clean.replace(m[0],'');
   }
+  const sacars = [...text.matchAll(/SACAR:([^:|]+)/g)];
+  for (const m of sacars) {
+    const name = m[1].trim();
+    const idx = order.findIndex(i => i.name.toLowerCase() === name.toLowerCase());
+    if (idx > -1) order.splice(idx, 1);
+    clean = clean.replace(m[0], '');
+  }
+
   const cargaMatches = [...text.matchAll(/CARGA:([^:]+):(\d+)/g)];
   for (const m of cargaMatches) {
     const nombre = m[1].trim();
