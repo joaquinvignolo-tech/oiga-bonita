@@ -346,8 +346,9 @@ REGLAS ESPECIALES:
 - Si el nombre del cliente aparece en la conversación, úsalo al confirmar sin pedirlo de nuevo.
 
 ⚠️ COMANDOS OBLIGATORIOS — NUNCA IGNORAR:
-Cuando el cliente ELIGE un producto → tu respuesta DEBE terminar con el comando Y una pregunta:
+Cuando el cliente CONFIRMA EXPLÍCITAMENTE que quiere un producto ("quiero", "dame", "poneme", "sí quiero", "agregame") → usá el comando:
 AGREGAR:[nombre exacto del producto]:[cantidad]
+NUNCA uses AGREGAR si el cliente solo pregunta ("¿tenés?", "¿cuánto sale?", "¿qué bebidas hay?") — en ese caso solo informá sin agregar nada.
 
 Cuando el cliente quiere confirmar:
 - Si no sabés su nombre → preguntá SOLO: "¿Tu nombre?"
@@ -629,7 +630,10 @@ async function sendMsg() {
       const qtyMatch = txt.match(/\b(\d+)\b/);
       const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
       const prod = findProductInText(txt + ' ' + raw);
-      if (prod && (userLower.includes('quiero') || userLower.includes('dame') || userLower.includes('poneme') || userLower.includes('agreg'))) {
+      // Solo agregar si el cliente pidió explícitamente Y la IA no usó AGREGAR (para evitar duplicados)
+    // NO agregar si el mensaje es una pregunta
+    const esPregunta = txt.includes('?') || userLower.includes('tenés') || userLower.includes('tienen') || userLower.includes('cuánto') || userLower.includes('cuanto') || userLower.includes('qué') || userLower.includes('que ') ;
+    if (!esPregunta && prod && (userLower.includes('quiero') || userLower.includes('dame') || userLower.includes('poneme') || userLower.includes('agreg'))) {
         const ex = order.find(i=>i.name===prod.name);
         if (ex) ex.qty += qty;
         else order.push({...prod, qty});
