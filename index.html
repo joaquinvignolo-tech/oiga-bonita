@@ -701,13 +701,12 @@ function renderCarrusel() {
   
   // Ocultar skeleton y mostrar carrusel
   const skeleton = document.getElementById('carruselSkeleton');
-  const track = document.getElementById('carruselTrack');
   if (skeleton) skeleton.style.display = 'none';
-  if (track) track.style.display = 'flex';
   const btnPrev = document.getElementById('carruselBtnPrev');
   const btnNext = document.getElementById('carruselBtnNext');
   if (btnPrev) btnPrev.style.display = 'block';
   if (btnNext) btnNext.style.display = 'block';
+  track.style.display = 'flex';
   track.innerHTML = carruselFotos.map(f => `
     <div style="min-width:100%;height:180px;flex-shrink:0;position:relative">
       <img src="${f.url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
