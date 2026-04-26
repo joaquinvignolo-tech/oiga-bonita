@@ -448,6 +448,11 @@ function confirmarPedidoConNombre(nombre, metodo) {
 }
 
 function pedirGPS(nombre) {
+  // Deshabilitar todos los botones de GPS para evitar doble disparo
+  document.querySelectorAll('button[onclick^="pedirGPS"]').forEach(b => {
+    b.disabled = true;
+    b.style.opacity = '0.5';
+  });
   addMsg('Obteniendo ubicación GPS...', 'user');
   navigator.geolocation.getCurrentPosition(
     function(pos) {
@@ -464,14 +469,18 @@ function pedirGPS(nombre) {
         total: order.reduce((a,i)=>a+i.price*i.qty,0),
         hora: new Date().toLocaleString('es-AR', {timeZone:'America/Argentina/Cordoba', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
       };
+      window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
+      window._mpNombre = nombre;
+      window._mpMapsLink = mapsLink;
+      // Guardar en localStorage por si el cliente vuelve de MP
+      localStorage.setItem('ob_mp_nombre', nombre);
+      localStorage.setItem('ob_mp_items', JSON.stringify(window._mpItems));
+      localStorage.setItem('ob_mp_maps', mapsLink || '');
       fetch('/api/orders-save', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(pedidoHistorial)
       }).catch(e => console.error('Error guardando pedido:', e));
-      window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
-      window._mpNombre = nombre;
-      window._mpMapsLink = mapsLink;
       order = [];
       updateOrderUI();
       document.getElementById('orderDetail').style.display = 'none';
