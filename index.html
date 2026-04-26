@@ -361,6 +361,8 @@ Cuando el cliente quiere confirmar:
 - Cuando diga el método → respondé SOLO con el comando sin NINGÚN texto adicional: CONFIRMAR:[nombre]|efectivo o CONFIRMAR:[nombre]|mp
 - NUNCA describas el pedido ni digas "tu pedido está confirmado" — el sistema lo maneja automáticamente
 - NUNCA digas que no podés generar links de pago — el sistema los genera solo cuando usás el comando
+- NUNCA digas que el link "ya llegó" o "debería haber llegado" — si el cliente no lo ve, es porque el sistema no ejecutó el comando todavía
+- Si el cliente confirma por segunda vez después de modificar, volvé a ejecutar el flujo completo: preguntá nombre si no lo sabés, método de pago, y usá CONFIRMAR:[nombre]|[metodo]
 
 EJEMPLO CORRECTO:
 Cliente: "quiero 2 patagonia ipa"
@@ -555,15 +557,11 @@ function parseCommands(text) {
 }
 
 function modificarPedido() {
-  // Restaurar items guardados para que el cliente pueda modificar
-  if (window._mpItems && window._mpItems.length > 0) {
-    order = window._mpItems.map(i => {
-      const prod = PRODUCTS.find(p => p.name === i.name);
-      return { name: i.name, price: i.price, qty: i.qty, cat: prod ? prod.cat : '' };
-    });
-    updateOrderUI();
-  }
-  addMsg('¡Claro! Podés cambiar tu pedido. ¿Qué querés modificar?', 'bot');
+  // Limpiar carrito completamente para empezar de cero
+  order = [];
+  window._mpItems = [];
+  updateOrderUI();
+  addMsg('¡Claro! Limpiamos el pedido. Decime qué querés pedir de nuevo.', 'bot');
 }
 
 async function pagarConMP(btn) {
