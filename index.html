@@ -358,7 +358,9 @@ NUNCA uses AGREGAR si el cliente solo pregunta ("¿tenés?", "¿cuánto sale?", 
 Cuando el cliente quiere confirmar:
 - Si no sabés su nombre → preguntá SOLO: "¿Tu nombre?"
 - Cuando tengas el nombre → preguntá SOLO: "¿Cómo vas a pagar? 💵 Efectivo o 📱 Mercado Pago"
-- Cuando diga el método → respondé SOLO con el comando: CONFIRMAR:[nombre]|efectivo o CONFIRMAR:[nombre]|mp
+- Cuando diga el método → respondé SOLO con el comando sin NINGÚN texto adicional: CONFIRMAR:[nombre]|efectivo o CONFIRMAR:[nombre]|mp
+- NUNCA describas el pedido ni digas "tu pedido está confirmado" — el sistema lo maneja automáticamente
+- NUNCA digas que no podés generar links de pago — el sistema los genera solo cuando usás el comando
 
 EJEMPLO CORRECTO:
 Cliente: "quiero 2 patagonia ipa"
@@ -628,24 +630,7 @@ async function sendMsg() {
     const raw = await callClaude(txt);
     const clean = parseCommands(raw);
     
-    // Si la IA no usó AGREGAR pero menciona un producto del catálogo junto con precio,
-    // intentar detectarlo del mensaje del USUARIO (no de la IA)
-    if (order.length === 0 || !raw.includes('AGREGAR')) {
-      const userLower = txt.toLowerCase();
-      const qtyMatch = txt.match(/\b(\d+)\b/);
-      const qty = qtyMatch ? parseInt(qtyMatch[1]) : 1;
-      const prod = findProductInText(txt + ' ' + raw);
-      // Solo agregar si el cliente pidió explícitamente Y la IA no usó AGREGAR (para evitar duplicados)
-    // NO agregar si el mensaje es una pregunta
-    const esPregunta = txt.includes('?') || userLower.includes('tenés') || userLower.includes('tienen') || userLower.includes('cuánto') || userLower.includes('cuanto') || userLower.includes('qué') || userLower.includes('que ') ;
-    if (!esPregunta && prod && (userLower.includes('quiero') || userLower.includes('dame') || userLower.includes('poneme') || userLower.includes('agreg'))) {
-        const ex = order.find(i=>i.name===prod.name);
-        if (ex) ex.qty += qty;
-        else order.push({...prod, qty});
-      }
-    }
-    
-    updateOrderUI();
+        updateOrderUI();
     typing.innerHTML = clean.replace(/\n/g,'<br>');
   } catch(e) {
     typing.innerHTML = 'Hubo un error de conexion. Intenta de nuevo.';
