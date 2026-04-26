@@ -148,6 +148,10 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
   font-size: 13px; text-align: center; flex-shrink: 0; display: none;
 }
 .cerrado-banner strong { color: #fca5a5; }
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
 </style>
 </head>
 <body>
@@ -186,10 +190,11 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
     <div class="order-hint">Tocá para ver o confirmar</div>
   </div>
 
-  <div id="carrusel" style="display:none;width:100%;overflow:hidden;position:relative;background:#000;max-height:180px">
-    <div id="carruselTrack" style="display:flex;transition:transform .4s ease;height:180px"></div>
-    <button onclick="carruselPrev()" style="position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">‹</button>
-    <button onclick="carruselNext()" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">›</button>
+  <div id="carrusel" style="width:100%;overflow:hidden;position:relative;background:#1a1a1a;height:180px">
+    <div id="carruselSkeleton" style="width:100%;height:180px;background:linear-gradient(90deg,#1a1a1a 25%,#2a2a2a 50%,#1a1a1a 75%);background-size:200% 100%;animation:shimmer 1.5s infinite"></div>
+    <div id="carruselTrack" style="display:none;transition:transform .4s ease;height:180px"></div>
+    <button id="carruselBtnPrev" onclick="carruselPrev()" style="display:none;position:absolute;left:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">‹</button>
+    <button id="carruselBtnNext" onclick="carruselNext()" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;z-index:2">›</button>
     <div id="carruselDots" style="position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:2"></div>
   </div>
   <div class="chat-window" id="chatWindow"></div>
@@ -678,7 +683,12 @@ async function loadCarrusel() {
     const data = await resp.json();
     if (data.fotos && Array.isArray(data.fotos) && data.fotos.length > 0) {
       carruselFotos = data.fotos.filter(f => f.activa);
-      if (carruselFotos.length > 0) renderCarrusel();
+      if (carruselFotos.length > 0) {
+      renderCarrusel();
+    } else {
+      const carruselEl = document.getElementById('carrusel');
+      if (carruselEl) carruselEl.style.display = 'none';
+    }
     }
   } catch(e) {}
 }
@@ -689,7 +699,15 @@ function renderCarrusel() {
   const dots = document.getElementById('carruselDots');
   if (!wrap || carruselFotos.length === 0) return;
   
-  wrap.style.display = 'block';
+  // Ocultar skeleton y mostrar carrusel
+  const skeleton = document.getElementById('carruselSkeleton');
+  const track = document.getElementById('carruselTrack');
+  if (skeleton) skeleton.style.display = 'none';
+  if (track) track.style.display = 'flex';
+  const btnPrev = document.getElementById('carruselBtnPrev');
+  const btnNext = document.getElementById('carruselBtnNext');
+  if (btnPrev) btnPrev.style.display = 'block';
+  if (btnNext) btnNext.style.display = 'block';
   track.innerHTML = carruselFotos.map(f => `
     <div style="min-width:100%;height:180px;flex-shrink:0;position:relative">
       <img src="${f.url}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.style.display='none'"/>
