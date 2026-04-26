@@ -235,7 +235,7 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 </div>
 
 <script>
-const WA_NUMBER = "543513958555";
+const WA_NUMBER = "543544650156";
 const API_KEY = "TU_API_KEY_AQUI";
 
 // HORARIOS (0=domingo, 1=lunes ... 6=sabado)
@@ -477,9 +477,9 @@ function pedirGPS(nombre) {
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
       const metodo = window._metodoPago || 'efectivo';
       if (metodo === 'mp') {
-        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar. Cuando vuelvas te pedimos el comprobante.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;border:none;cursor:pointer">Pagar con Mercado Pago</button>`, 'bot');
+        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar o modificá tu pedido si necesitás cambiar algo.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
       } else {
-        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a>`, 'bot');
+        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
       }
     },
     function(err) {
@@ -552,6 +552,18 @@ function parseCommands(text) {
     setTimeout(()=> confirmarPedidoConNombre(window._clienteName, window._metodoPago), 300);
   }
   return clean.replace(/\|/g,'').trim();
+}
+
+function modificarPedido() {
+  // Restaurar items guardados para que el cliente pueda modificar
+  if (window._mpItems && window._mpItems.length > 0) {
+    order = window._mpItems.map(i => {
+      const prod = PRODUCTS.find(p => p.name === i.name);
+      return { name: i.name, price: i.price, qty: i.qty, cat: prod ? prod.cat : '' };
+    });
+    updateOrderUI();
+  }
+  addMsg('¡Claro! Podés cambiar tu pedido. ¿Qué querés modificar?', 'bot');
 }
 
 async function pagarConMP(btn) {
