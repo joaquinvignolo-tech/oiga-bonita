@@ -587,8 +587,13 @@ async function pagarConMP(btn) {
   btn.textContent = 'Generando link...';
   btn.disabled = true;
   try {
-    const items = window._mpItems || [];
-    const nombre = window._mpNombre || 'Cliente';
+    // Usar _mpItems o recuperar del localStorage si está vacío
+    let items = window._mpItems || [];
+    if (!items.length) {
+      const saved = localStorage.getItem('ob_mp_items');
+      if (saved) items = JSON.parse(saved);
+    }
+    const nombre = window._mpNombre || localStorage.getItem('ob_mp_nombre') || 'Cliente';
     const resp = await fetch('/api/payment', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
