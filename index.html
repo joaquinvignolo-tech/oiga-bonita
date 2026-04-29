@@ -348,6 +348,8 @@ REGLAS ESPECIALES:
 - Huevo Kinder: preguntá nene o nena.
 - Cargas virtuales: preguntá compañía y monto. Calculá +10% de recargo. Usá: CARGA:Carga [Compañía] $[monto]:[total con recargo].
 - Si el cliente chatea sin comprar: respondé simpático y redirigí. Después de 2-3 mensajes decí solo "Cuando quieras pedirte algo acá estoy 😄".
+- Si el cliente pide hablar con una persona o con el kiosco directamente, respondé SOLO con el comando: HUMANO
+- Si la situación se complica y no podés resolverla, también usá el comando: HUMANO
 - Si el nombre del cliente aparece en la conversación, úsalo al confirmar sin pedirlo de nuevo.
 
 ⚠️ COMANDOS OBLIGATORIOS — NUNCA IGNORAR:
@@ -565,6 +567,14 @@ function parseCommands(text) {
     else order.push({name: nombre, price: precio, qty: 1, cat: 'cargas'});
     clean = clean.replace(m[0], '');
   }
+  if (/\bHUMANO\b/i.test(text)) {
+    clean = clean.replace(/\bHUMANO\b/gi, '').trim();
+    const waUrl = `https://wa.me/${WA_NUMBER}?text=Hola! Quiero hablar con alguien del kiosco.`;
+    setTimeout(() => {
+      addMsg(`¡Dale! Te conectamos directo con el equipo de Oiga Bonita 🛵<br><br><em style="font-size:12px;color:#888">Tené en cuenta que la atención puede demorar un ratito según el horario.</em><br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none;margin-top:8px">Hablar con el kiosco por WhatsApp</a>`, 'bot');
+    }, 300);
+  }
+
   const confirmMatch = text.match(/CONFIRMAR:([^|]+)\|(efectivo|mp|gps)/i);
   if (confirmMatch) {
     window._clienteName = confirmMatch[1].trim();
