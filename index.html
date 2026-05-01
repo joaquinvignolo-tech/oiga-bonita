@@ -482,7 +482,7 @@ function pedirGPS(nombre) {
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
       const metodo = window._metodoPago || 'efectivo';
       if (metodo === 'mp') {
-        // NO limpiar el carrito todavía — esperar que el pago se complete
+        window._pedidoConfirmado = true; // bloquear nuevos AGREGARs
         addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar o modificá tu pedido si necesitás cambiar algo.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
       } else {
         // Efectivo: guardar historial y limpiar carrito
@@ -541,6 +541,7 @@ function parseCommands(text) {
   let clean = text;
   const adds = [...text.matchAll(/AGREGAR:([^:|]+):(\d+)/g)];
   for (const m of adds) {
+    if (window._pedidoConfirmado) break; // no agregar si ya se confirmó
     const name = m[1].trim();
     const qty = parseInt(m[2]);
     const prod = PRODUCTS.find(p=>p.name.toLowerCase()===name.toLowerCase());
@@ -587,7 +588,7 @@ function parseCommands(text) {
 }
 
 function modificarPedido() {
-  // Limpiar carrito completamente para empezar de cero
+  window._pedidoConfirmado = false; // permitir nuevos AGREGARs
   order = [];
   window._mpItems = [];
   updateOrderUI();
