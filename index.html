@@ -237,6 +237,87 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 
 <script>
 const WA_NUMBER = "543544650156";
+
+// ═══ CONFIGURACIÓN DE DELIVERY ═══
+const KIOSCO_LAT = -31.94762147502959;
+const KIOSCO_LNG = -65.05350821325112;
+const DELIVERY_CONFIG = {
+  envioGratis: 30000,
+  horarios: {
+    // 0=domingo, 1=lun...6=sab
+    lunes:    { inicio: 9, fin: 21, disponible: true },
+    martes:   { inicio: 9, fin: 21, disponible: true },
+    miercoles:{ inicio: 9, fin: 21, disponible: true },
+    jueves:   { inicio: 9, fin: 21, disponible: true },
+    viernes:  { inicio: 9, fin: 21, disponible: true },
+    sabado:   { inicio: 9, fin: 21, disponible: true, consultarPrecio: true },
+    domingo:  { inicio: 9, fin: 21, disponible: true, consultarPrecio: true },
+    fueraHorario: { disponible: true, consultarPrecio: true }
+  },
+  zonas: [
+    { km: 3, precio: 2000, label: 'zona centro' },
+    { km: 99, precio: 3000, label: 'zona extendida' }
+  ]
+};
+
+function calcularDistanciaKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function calcularCostoDelivery(lat, lng, totalPedido) {
+  const now = ahoraArgentina ? ahoraArgentina() : new Date();
+  const dia = now.getDay(); // 0=dom, 1=lun...6=sab
+  const hora = now.getHours() + now.getMinutes() / 60;
+  const distancia = calcularDistanciaKm(KIOSCO_LAT, KIOSCO_LNG, lat, lng);
+  
+  // Verificar horario de Chasqui (L-V 9-21)
+  const esSemana = dia >= 1 && dia <= 5;
+  const enHorario = hora >= 9 && hora < 21;
+  const esFinDeSemana = dia === 0 || dia === 6;
+  
+  // Envío gratis
+  if (totalPedido >= DELIVERY_CONFIG.envioGratis) {
+    if (esFinDeSemana || !enHorario) {
+      return { 
+        costo: 0, gratis: true, disponible: true, 
+        consultar: true,
+        msg: `¡Envío gratis por tu compra mayor a $${DELIVERY_CONFIG.envioGratis.toLocaleString('es-AR')}! 🎉 Como estamos fuera del horario habitual de Chasqui, te contactamos para coordinar.`,
+        distancia: distancia.toFixed(1)
+      };
+    }
+    return { 
+      costo: 0, gratis: true, disponible: true, consultar: false,
+      msg: `¡Envío gratis por tu compra mayor a $${DELIVERY_CONFIG.envioGratis.toLocaleString('es-AR')}! 🎉`,
+      distancia: distancia.toFixed(1)
+    };
+  }
+  
+  // Fines de semana o fuera de horario → consultar precio
+  if (esFinDeSemana || !enHorario) {
+    return {
+      costo: null, gratis: false, disponible: true, consultar: true,
+      msg: `El delivery está disponible pero fuera del horario habitual. Te contactamos para coordinar el envío y el costo. 📞`,
+      distancia: distancia.toFixed(1)
+    };
+  }
+  
+  // L-V 9-21: calcular por zona
+  const zona = DELIVERY_CONFIG.zonas.find(z => distancia <= z.km);
+  const costo = zona ? zona.precio : DELIVERY_CONFIG.zonas[DELIVERY_CONFIG.zonas.length-1].precio;
+  const label = zona ? zona.label : 'zona extendida';
+  
+  return {
+    costo, gratis: false, disponible: true, consultar: false,
+    msg: `El costo de delivery para tu zona es $${costo.toLocaleString('es-AR')} (${label}, ${distancia.toFixed(1)}km).`,
+    distancia: distancia.toFixed(1)
+  };
+}
 const API_KEY = "TU_API_KEY_AQUI";
 
 // HORARIOS (0=domingo, 1=lunes ... 6=sabado)
@@ -466,7 +547,17 @@ function pedirGPS(nombre) {
       const mapsLink = `https://maps.google.com/?q=${lat},${lon}`;
       const lines = order.map(i=>`• ${i.qty}x ${i.name} — $${(i.price*i.qty).toLocaleString('es-AR')}`).join('%0A');
       const total = order.reduce((a,i)=>a+i.price*i.qty,0);
-      const msg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A📍 *Ubicacion:*%0A${encodeURIComponent(mapsLink)}`;
+      
+      // Calcular costo de delivery
+      const delivery = calcularCostoDelivery(parseFloat(lat), parseFloat(lon), total);
+      const costoDelivery = delivery.gratis ? 0 : (delivery.costo || 0);
+      const totalConDelivery = total + costoDelivery;
+      window._deliveryInfo = delivery;
+      const deliveryLine = delivery.gratis ? `%0A🚚 *Delivery: GRATIS* 🎉` : 
+        delivery.costo ? `%0A🚚 *Delivery: $${delivery.costo.toLocaleString('es-AR')}*` : 
+        `%0A🚚 *Delivery: A coordinar*`;
+      const totalFinal = delivery.gratis ? total : (delivery.costo ? totalConDelivery : total);
+      const msg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombre}*%0A%0A${lines}${deliveryLine}%0A%0A💰 *Total: $${totalFinal.toLocaleString('es-AR')}*%0A%0A📍 *Ubicacion:*%0A${encodeURIComponent(mapsLink)}`;
       const pedidoHistorial = {
         nombre: nombre,
         detalle: order.map(i=>`${i.qty}x ${i.name}`).join(', '),
@@ -484,7 +575,18 @@ function pedirGPS(nombre) {
       const metodo = window._metodoPago || 'efectivo';
       if (metodo === 'mp') {
         window._pedidoConfirmado = true; // bloquear nuevos AGREGARs
-        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar. Si querés cambiar algo, usá el botón "Modificar" en la barra del pedido arriba.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button>`, 'bot');
+        const deliveryMsgMP = delivery.gratis ? 
+          `<div style="background:#dcfce7;color:#15803d;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🎉 ¡Envío gratis!</div>` :
+          delivery.costo ? 
+          `<div style="background:#f0f0f0;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🚚 Delivery: $${delivery.costo.toLocaleString('es-AR')} · Total con delivery: $${totalConDelivery.toLocaleString('es-AR')}</div>` :
+          `<div style="background:#fef9c3;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🚚 ${delivery.msg}</div>`;
+        // Actualizar _mpItems con el costo de delivery incluido si corresponde
+        if (costoDelivery > 0) {
+          window._mpItems = [...order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)})),
+            {name: 'Costo de delivery', qty: 1, price: costoDelivery}];
+          localStorage.setItem('ob_mp_items', JSON.stringify(window._mpItems));
+        }
+        addMsg(`¡Perfecto! ${deliveryMsgMP}Total: <strong>$${totalConDelivery.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar. Si querés cambiar algo, usá el botón "Modificar" en la barra del pedido arriba.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button>`, 'bot');
       } else {
         // Efectivo: guardar historial y limpiar carrito
         fetch('/api/orders-save', {
@@ -496,7 +598,12 @@ function pedirGPS(nombre) {
         updateOrderUI();
         document.getElementById('orderDetail').style.display = 'none';
         orderDetailVisible = false;
-        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a>`, 'bot');
+        const deliveryMsg = delivery.gratis ? 
+          `<div style="background:#dcfce7;color:#15803d;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🎉 ¡Envío gratis!</div>` :
+          delivery.costo ? 
+          `<div style="background:#f0f0f0;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🚚 Delivery: $${delivery.costo.toLocaleString('es-AR')} · Total con delivery: $${totalConDelivery.toLocaleString('es-AR')}</div>` :
+          `<div style="background:#fef9c3;padding:8px 12px;border-radius:10px;font-size:13px;margin-bottom:10px">🚚 ${delivery.msg}</div>`;
+        addMsg(`¡Listo! ${deliveryMsg}Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a>`, 'bot');
       }
     },
     function(err) {
