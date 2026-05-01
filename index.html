@@ -224,6 +224,7 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
     <div id="orderItems"></div>
     <div class="order-total-row"><span>Total</span><span id="orderTotalDetail">$0</span></div>
     <button class="confirm-btn" onclick="confirmarPedido()">Confirmar y enviar por WhatsApp</button>
+    <button onclick="modificarPedido()" style="width:100%;margin-top:8px;padding:10px;background:none;border:1px solid #ddd;border-radius:20px;font-size:13px;color:#888;cursor:pointer;font-family:var(--font)">✏️ Limpiar y empezar de nuevo</button>
   </div>
 
   <div class="input-area">
@@ -483,7 +484,7 @@ function pedirGPS(nombre) {
       const metodo = window._metodoPago || 'efectivo';
       if (metodo === 'mp') {
         window._pedidoConfirmado = true; // bloquear nuevos AGREGARs
-        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar o modificá tu pedido si necesitás cambiar algo.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
+        addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar. Si querés cambiar algo, usá el botón "Modificar" en la barra del pedido arriba.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button>`, 'bot');
       } else {
         // Efectivo: guardar historial y limpiar carrito
         fetch('/api/orders-save', {
@@ -495,7 +496,7 @@ function pedirGPS(nombre) {
         updateOrderUI();
         document.getElementById('orderDetail').style.display = 'none';
         orderDetailVisible = false;
-        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
+        addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a>`, 'bot');
       }
     },
     function(err) {
@@ -672,6 +673,8 @@ async function sendMsg() {
   const btn = document.getElementById('sendBtn');
   const txt = inp.value.trim();
   if (!txt || isLoading) return;
+  // Si el cliente escribe algo después de confirmar, permitir modificaciones
+  window._pedidoConfirmado = false;
   inp.value = '';
   btn.disabled = true;
   addMsg(txt, 'user');
