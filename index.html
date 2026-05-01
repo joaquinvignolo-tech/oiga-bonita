@@ -673,8 +673,9 @@ async function sendMsg() {
   const btn = document.getElementById('sendBtn');
   const txt = inp.value.trim();
   if (!txt || isLoading) return;
-  // Si el cliente escribe algo después de confirmar, permitir modificaciones
+  // Si el cliente escribe algo después de confirmar, permitir modificaciones y limpiar items viejos
   window._pedidoConfirmado = false;
+  window._mpItems = [];
   inp.value = '';
   btn.disabled = true;
   addMsg(txt, 'user');
