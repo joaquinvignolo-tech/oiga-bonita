@@ -418,7 +418,8 @@ loadProductsFromDB();
 loadCarrusel();
 
 function buildSystemPrompt() {
-  const promoBlock = window._obPromos ? `\n\nPROMOCIONES ACTIVAS HOY:\n${window._obPromos}\n(Mencioná las promos de forma natural. Si el pedido supera $30.000 avisá que el envío es gratis.)` : '';
+  const deliveryBlock = `\n\nINFO DE DELIVERY:\n- El delivery lo hace Chasqui y tiene un costo según la distancia (se calcula automáticamente al confirmar el pedido).\n- Con compras mayores a $30.000 el envío es GRATIS 🎉\n- Si el cliente pregunta si hay envío gratis, decile que SÍ con compras mayores a $30.000.\n- Si el total se acerca a $30.000 avisale cuánto le falta para el envío gratis.\n- Disponible L-V 9 a 21hs. Fines de semana y otros horarios se coordina por WhatsApp.`;
+  const promoBlock = window._obPromos ? `\n\nPROMOCIONES ACTIVAS HOY:\n${window._obPromos}\n(Mencioná las promos de forma natural.)` : '';
   return `Sos el asistente de ventas del kiosco "Oiga Bonita" en Argentina. Usás el voseo rioplatense. Respondés MUY corto, máximo 1 oración.
 
 CATÁLOGO:
