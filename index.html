@@ -476,24 +476,25 @@ function pedirGPS(nombre) {
       window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
       window._mpNombre = nombre;
       window._mpMapsLink = mapsLink;
-      // Guardar en localStorage por si el cliente vuelve de MP
       localStorage.setItem('ob_mp_nombre', nombre);
       localStorage.setItem('ob_mp_items', JSON.stringify(window._mpItems));
       localStorage.setItem('ob_mp_maps', mapsLink || '');
-      fetch('/api/orders-save', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(pedidoHistorial)
-      }).catch(e => console.error('Error guardando pedido:', e));
-      order = [];
-      updateOrderUI();
-      document.getElementById('orderDetail').style.display = 'none';
-      orderDetailVisible = false;
       const waUrl = `https://wa.me/${WA_NUMBER}?text=${msg}`;
       const metodo = window._metodoPago || 'efectivo';
       if (metodo === 'mp') {
+        // NO limpiar el carrito todavía — esperar que el pago se complete
         addMsg(`¡Perfecto! Total: <strong>$${total.toLocaleString('es-AR')}</strong><br><br>Tocá para pagar o modificá tu pedido si necesitás cambiar algo.<br><br><button onclick="pagarConMP(this)" style="display:inline-block;background:#009ee3;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;border:none;cursor:pointer">Pagar con Mercado Pago</button><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
       } else {
+        // Efectivo: guardar historial y limpiar carrito
+        fetch('/api/orders-save', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(pedidoHistorial)
+        }).catch(e => console.error('Error guardando pedido:', e));
+        order = [];
+        updateOrderUI();
+        document.getElementById('orderDetail').style.display = 'none';
+        orderDetailVisible = false;
         addMsg(`¡Listo! Mandanos el pedido por WhatsApp y coordinamos el delivery 🛵<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar pedido por WhatsApp</a><br><button onclick="modificarPedido()" style="display:inline-block;background:none;color:#888;padding:10px 20px;border-radius:24px;font-size:13px;border:1px solid #ddd;cursor:pointer;margin-top:8px">✏️ Modificar pedido</button>`, 'bot');
       }
     },
@@ -597,11 +598,17 @@ async function pagarConMP(btn) {
   btn.textContent = 'Generando link...';
   btn.disabled = true;
   try {
-    // Usar _mpItems o recuperar del localStorage si está vacío
-    let items = window._mpItems || [];
+    // Usar el carrito actual si está disponible, sino _mpItems, sino localStorage
+    let items = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
+    if (!items.length) items = window._mpItems || [];
     if (!items.length) {
       const saved = localStorage.getItem('ob_mp_items');
       if (saved) items = JSON.parse(saved);
+    }
+    // Actualizar _mpItems y localStorage con los items actuales
+    if (items.length) {
+      window._mpItems = items;
+      localStorage.setItem('ob_mp_items', JSON.stringify(items));
     }
     const nombre = window._mpNombre || localStorage.getItem('ob_mp_nombre') || 'Cliente';
     const resp = await fetch('/api/payment', {
@@ -780,6 +787,23 @@ if (estadoPago === 'ok') {
   const waMsg = `Pedido *Oiga Bonita*%0A%0A👤 *${nombreGuardado}*%0A%0A${lines}%0A%0A💰 *Total: $${total.toLocaleString('es-AR')}*%0A%0A✅ *Pagado con Mercado Pago*${ubicacionBlock}%0A%0A📎 Comprobante adjunto`;
   const waUrl = `https://wa.me/${WA_NUMBER}?text=${waMsg}`;
   addMsg(`¡Pago aprobado! 🎉<br><br>Para confirmar tu entrega mandanos por WhatsApp:<br>1️⃣ Una captura del <strong>comprobante de MP</strong><br>2️⃣ Este mensaje con tu pedido<br><br><a href="${waUrl}" target="_blank" style="display:inline-block;background:#25D366;color:#fff;padding:12px 24px;border-radius:24px;font-size:14px;font-weight:500;text-decoration:none">Enviar comprobante + pedido</a>`, 'bot');
+  // Guardar historial al confirmar pago
+  const itemsOk = JSON.parse(localStorage.getItem('ob_mp_items') || '[]');
+  const nombreOk = localStorage.getItem('ob_mp_nombre') || 'Cliente';
+  if (itemsOk.length > 0) {
+    const pedidoOk = {
+      nombre: nombreOk,
+      detalle: itemsOk.map(i=>`${i.qty}x ${i.name}`).join(', '),
+      items: itemsOk,
+      total: itemsOk.reduce((a,i)=>a+i.price*i.qty,0),
+      hora: new Date().toLocaleString('es-AR', {timeZone:'America/Argentina/Cordoba', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'})
+    };
+    fetch('/api/orders-save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(pedidoOk)
+    }).catch(e => console.error('Error guardando pedido MP:', e));
+  }
   localStorage.removeItem('ob_mp_nombre');
   localStorage.removeItem('ob_mp_items');
   localStorage.removeItem('ob_mp_maps');
