@@ -150,6 +150,22 @@ body{font-family:'DM Sans',sans-serif;background:var(--gris);color:var(--texto);
   </div>
 
   <div style="background:var(--blanco);border:.5px solid var(--gris-borde);border-radius:var(--radio);padding:14px;margin-bottom:24px">
+    <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Tráfico y conversión (últimos 7 días)</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
+      <div style="background:var(--gris);border-radius:var(--radio);padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--texto-suave)">Visitas</div>
+        <div id="st-visitas" style="font-size:22px;font-weight:500;color:var(--texto)">—</div>
+      </div>
+      <div style="background:var(--gris);border-radius:var(--radio);padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--texto-suave)">Chatearon</div>
+        <div id="st-mensajes" style="font-size:22px;font-weight:500;color:var(--texto)">—</div>
+      </div>
+      <div style="background:var(--gris);border-radius:var(--radio);padding:10px;text-align:center">
+        <div style="font-size:11px;color:var(--texto-suave)">Compraron</div>
+        <div id="st-compraron" style="font-size:22px;font-weight:500;color:var(--rojo)">—</div>
+      </div>
+    </div>
+    <div id="st-conversion-pct" style="font-size:12px;color:var(--texto-suave);text-align:center;margin-bottom:16px"></div>
     <div style="font-size:11px;font-weight:500;color:var(--texto-suave);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Últimos pedidos</div>
     <div id="st-pedidos-list"></div>
   </div>
@@ -262,6 +278,7 @@ async function load() {
   render();
   calcStats('hoy');
   loadFotos();
+  loadTrafico();
 }
 
 async function save() {
@@ -441,6 +458,24 @@ async function limpiarHistorial() {
 </div>
 
 <script>
+async function loadTrafico() {
+  try {
+    const resp = await fetch('/api/stats-get?dias=7');
+    const data = await resp.json();
+    if (Array.isArray(data)) {
+      const totVisitas = data.reduce((a,d) => a + (d.visitas||0), 0);
+      const totMensajes = data.reduce((a,d) => a + (d.mensajes||0), 0);
+      const totPedidos = data.reduce((a,d) => a + (d.pedidos||0), 0);
+      document.getElementById('st-visitas').textContent = totVisitas;
+      document.getElementById('st-mensajes').textContent = totMensajes;
+      document.getElementById('st-compraron').textContent = totPedidos;
+      const conv = totVisitas > 0 ? Math.round(totPedidos/totVisitas*100) : 0;
+      document.getElementById('st-conversion-pct').textContent = 
+        `Conversión: ${conv}% de las visitas terminaron en compra`;
+    }
+  } catch(e) {}
+}
+
 async function calcStats(period) {
   let historial = [];
   try {
