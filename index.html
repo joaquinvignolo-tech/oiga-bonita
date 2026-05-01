@@ -417,6 +417,16 @@ async function loadProductsFromDB() {
 loadProductsFromDB();
 loadCarrusel();
 
+// Tracking de visitas
+function track(evento) {
+  fetch('/api/stats-track', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ evento })
+  }).catch(()=>{});
+}
+track('visita');
+
 function buildSystemPrompt() {
   const deliveryBlock = `\n\nINFO DE DELIVERY:\n- El delivery lo hace Chasqui y tiene un costo según la distancia (se calcula automáticamente al confirmar el pedido).\n- Con compras mayores a $30.000 el envío es GRATIS 🎉\n- Si el cliente pregunta si hay envío gratis, decile que SÍ con compras mayores a $30.000.\n- Si el total se acerca a $30.000 avisale cuánto le falta para el envío gratis.\n- Disponible L-V 9 a 21hs. Fines de semana y otros horarios se coordina por WhatsApp.`;
   const promoBlock = window._obPromos ? `\n\nPROMOCIONES ACTIVAS HOY:\n${window._obPromos}\n(Mencioná las promos de forma natural.)` : '';
@@ -599,6 +609,7 @@ function pedirGPS(nombre) {
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify(pedidoHistorial)
         }).catch(e => console.error('Error guardando pedido:', e));
+        track('pedido');
         order = [];
         updateOrderUI();
         document.getElementById('orderDetail').style.display = 'none';
@@ -796,6 +807,7 @@ async function sendMsg() {
   btn.disabled = true;
   addMsg(txt, 'user');
   isLoading = true;
+  if (history.length === 0) track('mensaje'); // primer mensaje
   inp.disabled = true;
   const typing = addTyping();
   try {
