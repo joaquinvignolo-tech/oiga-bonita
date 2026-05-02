@@ -441,6 +441,7 @@ REGLAS ESPECIALES:
 - Huevo Kinder: preguntá nene o nena.
 - Cargas virtuales: preguntá compañía y monto. Calculá +10% de recargo. Usá: CARGA:Carga [Compañía] $[monto]:[total con recargo].
 - Si el cliente chatea sin comprar: respondé simpático y redirigí. Después de 2-3 mensajes decí solo "Cuando quieras pedirte algo acá estoy 😄".
+- CROSS-SELLING natural: cuando el cliente elige un producto, sugerí UNO solo relacionado al final de tu respuesta, de forma natural y sin presionar. Ejemplos: cliente pide cigarrillos → "¿Te sumo un encendedor?"; cliente pide cerveza → "¿Querés algo para picar? Tengo Pringles"; cliente pide Nutella → "¿Te agrego unas galletitas?"; cliente pide gomitas → "¿Algo más dulce?". Si el cliente dice que no, no insistas.
 - Si el cliente pide hablar con una persona o con el kiosco directamente, respondé SOLO con el comando: HUMANO
 - Si la situación se complica y no podés resolverla, también usá el comando: HUMANO
 - Si el nombre del cliente aparece en la conversación, úsalo al confirmar sin pedirlo de nuevo.
@@ -578,6 +579,7 @@ function pedirGPS(nombre) {
       };
       window._mpItems = order.filter(i => i.price > 0).map(i => ({name: i.name, qty: Number(i.qty), price: Number(i.price)}));
       window._mpNombre = nombre;
+      localStorage.setItem('ob_cliente_nombre', nombre);
       window._mpMapsLink = mapsLink;
       localStorage.setItem('ob_mp_nombre', nombre);
       localStorage.setItem('ob_mp_items', JSON.stringify(window._mpItems));
@@ -950,8 +952,12 @@ if (estadoPago === 'ok') {
   addMsg('Hubo un problema con el pago. Podés intentar de nuevo o pagar en efectivo cuando llegue el delivery.', 'bot');
   history.replaceState({}, '', '/');
 } else {
+  const clienteNombre = localStorage.getItem('ob_cliente_nombre');
+  const saludoPersonal = clienteNombre
+    ? `¡Hola <strong>${clienteNombre}</strong>, qué bueno verte de nuevo! 😊 ¿Qué te traemos hoy?`
+    : 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?';
   const bienvenida = estaAbierto()
-    ? 'Hola! Bienvenido/a a <strong>Oiga Bonita</strong> ✨ Tenemos de todo para vos. ¿Qué estás buscando?'
+    ? saludoPersonal
     : 'Hola! Estamos cerrados por ahora. Podés hacer tu pedido igual y te contactamos cuando abramos.';
   addMsg(bienvenida, 'bot');
 }
